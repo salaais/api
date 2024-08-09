@@ -18,11 +18,7 @@ async function bootstrap() {
         const allowedOrigins = [
           'http://localhost:3000',
           'http://localhost:3001',
-          'https://www.ativachemical.com',
-          'https://ativachemical.com',
-          'https://ac-front.vercel.app',
-          'https://ac-front-git-development-ativachemicals-projects.vercel.app',
-          'ac-front-ativachemicals-projects.vercel.app',
+          'https://api-seven-amber.vercel.app/',
         ];
         if (allowedOrigins.includes(origin)) {
           callback(null, true);
