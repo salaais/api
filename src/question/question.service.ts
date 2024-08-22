@@ -4,7 +4,7 @@ import { CreateQuestionsTsvDto } from './dto/create-questions-tsv';
 import * as fastcsv from 'fast-csv';
 import { Readable } from 'stream';
 import { AllQuestionsDto } from './dto/all-questions';
-import { normalizeString } from 'src/utils';
+import { normalizeString } from '../utils';
 
 @Injectable()
 export class QuestionService {
