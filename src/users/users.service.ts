@@ -1,4 +1,4 @@
-import { Injectable } from '@nestjs/common';
+import { HttpException, HttpStatus, Injectable } from '@nestjs/common';
 import { PrismaService } from '../prisma/prisma.service';
 import { CreateUserDto } from './dto/create-user.dto';
 import * as bcrypt from 'bcrypt';
@@ -12,22 +12,55 @@ export const roundsOfHashing = 10;
 export class UsersService {
   constructor(private prisma: PrismaService) {}
 
-  async create(createUserDto: CreateUserDto): Promise<Usuario> {
+  async create(createUserDto: CreateUserDto): Promise<any> {
+    // Verificar se o email já existe
+    const existingUserByEmail = await this.prisma.usuario.findUnique({
+      where: { email: createUserDto.email },
+    });
+  
+    if (existingUserByEmail) {
+      throw new HttpException('Email already exists', HttpStatus.UNPROCESSABLE_ENTITY);
+    }
+  
+    // Verificar se o username já existe
+    const existingUserByUsername = await this.prisma.usuario.findUnique({
+      where: { username: createUserDto.username },
+    });
+  
+    if (existingUserByUsername) {
+      throw new HttpException('Username already exists', HttpStatus.UNPROCESSABLE_ENTITY);
+    }
+  
     const hashedPassword = await bcrypt.hash(
       createUserDto.password,
       roundsOfHashing,
     );
-
-    const { password, ...rest } = createUserDto;
-
+  
+    const { password, tipo_login, ...rest } = createUserDto;
+  
+    // Buscar o id do TipoLogin com base no nome
+    const tipoLogin = await this.prisma.tipoLogin.findUnique({
+      where: { key: tipo_login },
+    });
+  
+    if (!tipoLogin) {
+      throw new HttpException('Tipo de login não encontrado', HttpStatus.UNPROCESSABLE_ENTITY);
+    }
+  
     const data = {
       ...rest,
-      senha: hashedPassword, // Mapeando para o campo correto na tabela do Prisma
+      senha: hashedPassword,
+      id_tipo_login: tipoLogin.id, // Salvar a referência do id do tipo de login
     };
-
-    return this.prisma.usuario.create({
+  
+    const createdUser = await this.prisma.usuario.create({
       data,
     });
+  
+    // Criar uma cópia do objeto excluindo o campo senha
+    const { senha, ...userWithoutPassword } = createdUser;
+  
+    return userWithoutPassword;
   }
 
   async findAll() {
@@ -54,11 +87,27 @@ export class UsersService {
       );
     }
 
-    const { ...rest } = updateUserDto;
+    const { tipo_login, ...rest } = updateUserDto;
 
-    const data = {
+    const data: any = {
       ...rest,
     };
+
+    // Verificar se o tipo_login foi fornecido
+    if (tipo_login) {
+      const tipoLogin = await this.prisma.tipoLogin.findUnique({
+        where: { key: tipo_login },
+      });
+
+      if (!tipoLogin) {
+        throw new Error('Tipo de login não encontrado');
+      }
+
+      // Conectar o tipo de login pelo id
+      data.tipo_login = {
+        connect: { id: tipoLogin.id },
+      };
+    }
 
     return this.prisma.usuario.update({
       where: { id },

@@ -6,6 +6,7 @@ import { UsersModule } from './users/users.module';
 import { AuthModule } from './auth/auth.module';
 import { ServeStaticModule } from '@nestjs/serve-static';
 import { join } from 'path';
+import { QuestionModule } from './question/question.module';
 
 @Module({
   imports: [
@@ -16,6 +17,7 @@ import { join } from 'path';
       rootPath: join(__dirname, '..', 'node_modules', 'swagger-ui-dist'),
       serveRoot: '/swagger',
     }),
+    QuestionModule,
   ],
   controllers: [AppController],
   providers: [AppService],
