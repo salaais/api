@@ -1,10 +1,16 @@
-import { Injectable, HttpException, HttpStatus } from '@nestjs/common';
+import {
+  Injectable,
+  HttpException,
+  HttpStatus,
+  NotFoundException,
+} from '@nestjs/common';
 import { PrismaService } from 'src/prisma/prisma.service';
 import { CreateQuestionsTsvDto } from './dto/create-questions-tsv';
 import * as fastcsv from 'fast-csv';
 import { Readable } from 'stream';
 import { AllQuestionsDto } from './dto/all-questions';
 import { normalizeString } from '../utils';
+import { GenerateTestDto } from './dto/generate-test';
 
 @Injectable()
 export class QuestionService {
@@ -170,7 +176,7 @@ export class QuestionService {
 
       // Find or create the Materia
       const materia = await this.prisma.materia.upsert({
-        where: { key: materiaAbreviacao.trim() },
+        where: { key: normalizeString(materiaAbreviacao) },
         update: {},
         create: {
           key: materiaAbreviacao.trim(),
@@ -310,6 +316,77 @@ export class QuestionService {
       items: formattedQuestions.length,
       data: formattedQuestions,
     };
+  }
+
+  async generateTest(request: GenerateTestDto) {
+    const { curso, questoes_por_bloco, blocos } = request;
+  
+    // Primeiro, filtramos o curso especificado
+    const cursoFiltrado = await this.prisma.curso.findUnique({
+      where: {
+        key: curso,
+      },
+      include: {
+        bloco: {
+          include: {
+            materia_bloco: {
+              include: {
+                meteria: true,
+                questao: true,
+              },
+            },
+          },
+        },
+      },
+    });
+  
+    if (!cursoFiltrado) {
+      throw new NotFoundException(`Curso com key ${curso} não encontrado`);
+    }
+  
+    // Se blocos específicos forem fornecidos, filtramos pelos blocos
+    let blocosFiltrados = cursoFiltrado.bloco;
+    if (blocos && blocos.length > 0) {
+      blocosFiltrados = blocosFiltrados.filter((bloco) =>
+        blocos.includes(bloco.key),
+      );
+    }
+  
+    // Coletar todas as questões dos blocos filtrados e selecionar 20 por bloco
+    const questoesPorBloco = await Promise.all(blocosFiltrados.map(async (bloco) => {
+      // Coletar todas as questões para o bloco
+      const questoes = bloco.materia_bloco.flatMap((materiaBloco) =>
+        materiaBloco.questao.map((questao) => ({
+          ...questao,
+          materia: materiaBloco.meteria.key,
+          bloco: bloco.key,
+        })),
+      );
+  
+      // Selecionar até 20 questões aleatoriamente
+      return this.shuffleAndSelect(questoes, questoes_por_bloco);
+    }));
+  
+    // Montar a resposta com a quantidade total de questões e as questões agrupadas por bloco
+    const totalQuestoes = questoes_por_bloco * blocosFiltrados.length;
+    const questoesPlanas = questoesPorBloco.flat();
+  
+    return {
+      items: totalQuestoes,
+      data: questoesPlanas,
+    };
+  }
+
+  //embaralhar as questões e selecionar uma quantidade específica
+  private shuffleAndSelect(array: any[], quantidade: number) {
+    // Embaralha o array
+    for (let i = array.length - 1; i > 0; i--) {
+      const j = Math.floor(Math.random() * (i + 1));
+      [array[i], array[j]] = [array[j], array[i]];
+    }
+  
+    // Retorna a quantidade solicitada ou todas as questões, se o array for menor
+    return array.slice(0, quantidade);
   }
 
   // Adapte a função convertToTSVFormat para o formato visual

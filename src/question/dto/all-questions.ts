@@ -1,7 +1,7 @@
 import { ApiProperty } from '@nestjs/swagger';
 import { IsNotEmpty, IsNumber, IsString } from 'class-validator';
 import { Subject } from '../enums/cms-subject';
-import { Curse } from '../enums/cms-curse';
+import { Curse } from '../enums/curse';
 
 export class AllQuestionsDto {
 
