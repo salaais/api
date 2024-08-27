@@ -11,6 +11,7 @@ import { Readable } from 'stream';
 import { AllQuestionsDto } from './dto/all-questions';
 import { normalizeString } from '../utils';
 import { GenerateTestDto } from './dto/generate-test';
+import { TestGradeDto } from './dto/test-grade';
 
 @Injectable()
 export class QuestionService {
@@ -320,7 +321,7 @@ export class QuestionService {
 
   async generateTest(request: GenerateTestDto) {
     const { curso, questoes_por_bloco, blocos } = request;
-  
+
     // Primeiro, filtramos o curso especificado
     const cursoFiltrado = await this.prisma.curso.findUnique({
       where: {
@@ -339,11 +340,11 @@ export class QuestionService {
         },
       },
     });
-  
+
     if (!cursoFiltrado) {
       throw new NotFoundException(`Curso com key ${curso} não encontrado`);
     }
-  
+
     // Se blocos específicos forem fornecidos, filtramos pelos blocos
     let blocosFiltrados = cursoFiltrado.bloco;
     if (blocos && blocos.length > 0) {
@@ -351,29 +352,84 @@ export class QuestionService {
         blocos.includes(bloco.key),
       );
     }
-  
+
     // Coletar todas as questões dos blocos filtrados e selecionar 20 por bloco
-    const questoesPorBloco = await Promise.all(blocosFiltrados.map(async (bloco) => {
-      // Coletar todas as questões para o bloco
-      const questoes = bloco.materia_bloco.flatMap((materiaBloco) =>
-        materiaBloco.questao.map((questao) => ({
-          ...questao,
-          materia: materiaBloco.meteria.key,
-          bloco: bloco.key,
-        })),
-      );
-  
-      // Selecionar até 20 questões aleatoriamente
-      return this.shuffleAndSelect(questoes, questoes_por_bloco);
-    }));
-  
+    const questoesPorBloco = await Promise.all(
+      blocosFiltrados.map(async (bloco) => {
+        // Coletar todas as questões para o bloco
+        const questoes = bloco.materia_bloco.flatMap((materiaBloco) =>
+          materiaBloco.questao.map((questao) => ({
+            ...questao,
+            materia: materiaBloco.meteria.key,
+            bloco: bloco.key,
+          })),
+        );
+
+        // Selecionar até 20 questões aleatoriamente
+        return this.shuffleAndSelect(questoes, questoes_por_bloco);
+      }),
+    );
+
     // Montar a resposta com a quantidade total de questões e as questões agrupadas por bloco
     const totalQuestoes = questoes_por_bloco * blocosFiltrados.length;
     const questoesPlanas = questoesPorBloco.flat();
-  
+
     return {
       items: totalQuestoes,
       data: questoesPlanas,
+    };
+  }
+
+  async testGrade(request: TestGradeDto) {
+    const questionKeys = request.data.map((q) => q.key);
+
+    // Busca as questões no banco de dados
+    const questionsFromDB = await this.prisma.questao.findMany({
+      where: {
+        key: {
+          in: questionKeys,
+        },
+      },
+    });
+
+    // Variáveis para calcular acertos e armazenar as chaves das questões corretas e erradas
+    let total_corretas = 0;
+    let total_incorretas = 0;
+    const respostas_corretas: string[] = [];
+    const respostas_incorretas: string[] = [];
+
+    // Verifica as respostas fornecidas contra as corretas
+    request.data.forEach((questionRequest) => {
+      const correctQuestion = questionsFromDB.find(
+        (q) => q.key === questionRequest.key,
+      );
+      if (
+        correctQuestion &&
+        correctQuestion.alternativa_correta === questionRequest.questao
+      ) {
+        total_corretas++;
+        respostas_corretas.push(questionRequest.key);
+      } else {
+        total_incorretas++;
+        respostas_incorretas.push(questionRequest.key);
+      }
+    });
+
+    // Calcula a porcentagem de acertos
+    const total_questoes = request.data.length;
+    const porcentagem_acerto = parseFloat((
+      (total_corretas / total_questoes) *
+      100
+    ).toFixed(3));
+
+    // Retorna a porcentagem de acertos, chaves das questões corretas e erradas
+    return {
+      total_incorretas,
+      total_corretas,
+      total_questoes,
+      porcentagem_acerto,
+      respostas_corretas, // Lista de chaves das questões corretas
+      respostas_incorretas, // Lista de chaves das questões erradas
     };
   }
 
@@ -384,7 +440,7 @@ export class QuestionService {
       const j = Math.floor(Math.random() * (i + 1));
       [array[i], array[j]] = [array[j], array[i]];
     }
-  
+
     // Retorna a quantidade solicitada ou todas as questões, se o array for menor
     return array.slice(0, quantidade);
   }

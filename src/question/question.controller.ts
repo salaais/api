@@ -10,9 +10,10 @@ import { QuestionService } from './question.service';
 import { CreateQuestionsTsvDto } from './dto/create-questions-tsv';
 import { AllQuestionsDto } from './dto/all-questions';
 import { GenerateTestDto } from './dto/generate-test';
+import { TestGradeDto } from './dto/test-grade';
 
-@ApiTags('Questions')
-@Controller('question')
+@ApiTags('Questão')
+@Controller('questao')
 export class QuestionController {
   constructor(private readonly questionService: QuestionService) {}
 
@@ -21,13 +22,11 @@ export class QuestionController {
   //   @UseGuards(JwtAuthGuard)
   @ApiOperation({ summary: 'Cadastrar questões saparadas por espaços' })
   @ApiResponse({ status: 201, description: 'created' })
-  async createQuestionsSpaces(
-    @Body() request: CreateQuestionsTsvDto,
-  ) {
+  async createQuestionsSpaces(@Body() request: CreateQuestionsTsvDto) {
     return this.questionService.createQuestionsTsv(request);
   }
 
-  @Post('/all')
+  @Post('/todas')
   //   @ApiBearerAuth()
   //   @UseGuards(JwtAuthGuard)
   @ApiOperation({ summary: 'Retornar Todas as questões funcionando: Key' })
@@ -36,10 +35,17 @@ export class QuestionController {
     return this.questionService.allQuestions(request);
   }
 
-  @Post('/generate')
-  @ApiOperation({summary:'Retorna questões geradas de forma aleatória'})
-  @ApiResponse({status:200, description:'success'})
-  async generateQuestions(@Body() request: GenerateTestDto){
+  @Post('/gerar')
+  @ApiOperation({ summary: 'Retorna questões geradas de forma aleatória' })
+  @ApiResponse({ status: 200, description: 'success' })
+  async generateQuestions(@Body() request: GenerateTestDto) {
     return this.questionService.generateTest(request);
+  }
+
+  @Post('/correcao')
+  @ApiOperation({ summary: 'Retorna questões geradas de forma aleatória' })
+  @ApiResponse({ status: 200, description: 'success' })
+  async testGrade(@Body() request: TestGradeDto) {
+    return this.questionService.testGrade(request);
   }
 }
