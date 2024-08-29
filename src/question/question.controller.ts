@@ -42,7 +42,7 @@ export class QuestionController {
     return this.questionService.generateTest(request);
   }
 
-  @Post('/correcao')
+  @Post('/correcao_simples')
   @ApiOperation({ summary: 'Retorna questões geradas de forma aleatória' })
   @ApiResponse({ status: 200, description: 'success' })
   async testGrade(@Body() request: TestGradeDto) {

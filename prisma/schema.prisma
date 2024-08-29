@@ -44,26 +44,26 @@ model RegraPermissao {
 }
 
 model Permissao {
-  id              Int                @id @default(autoincrement())
-  key             String             @unique
-  descricao       String
+  id               Int                @id @default(autoincrement())
+  key              String             @unique
+  descricao        String
   PermissaoUsuario PermissaoUsuario[]
   RegraPermissao   RegraPermissao[]
 }
 
 model Regra {
   id             Int              @id @default(autoincrement())
-  key            String           @unique()
+  key            String           @unique
   descricao      String
   RegraPermissao RegraPermissao[]
 }
 
 model Curso {
-  id         Int     @id @default(autoincrement())
-  key        String  @unique
-  nome       String
-  descricao  String
-  bloco      Bloco[]
+  id        Int     @id @default(autoincrement())
+  key       String  @unique
+  nome      String
+  descricao String
+  bloco     Bloco[]
 }
 
 model Bloco {

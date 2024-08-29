@@ -180,7 +180,7 @@ export class QuestionService {
         where: { key: normalizeString(materiaAbreviacao) },
         update: {},
         create: {
-          key: materiaAbreviacao.trim(),
+          key: normalizeString(materiaAbreviacao.trim()),
           nome: '',
           descricao: '',
         },
@@ -417,10 +417,9 @@ export class QuestionService {
 
     // Calcula a porcentagem de acertos
     const total_questoes = request.data.length;
-    const porcentagem_acerto = parseFloat((
-      (total_corretas / total_questoes) *
-      100
-    ).toFixed(3));
+    const porcentagem_acerto = parseFloat(
+      ((total_corretas / total_questoes) * 100).toFixed(3),
+    );
 
     // Retorna a porcentagem de acertos, chaves das questões corretas e erradas
     return {

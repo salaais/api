@@ -91,6 +91,33 @@ npm i -D ts-node typescript @types/node
 
 ```
 
+#### Prisma Migration Baseline
+```bash
+# estrututaçao dos dados de forma inicial
+npx prisma migrate dev --create-only --name baseline
+
+```
+
+#### Sync with data base
+```bash
+# Puxar dados existentes do banco para o schema.prisma
+npx prisma db pull
+
+# Gera o cliente Prisma baseado no esquema Prisma
+npx prisma generate
+
+```
+
+#### Prisma Migration
+
+```bash
+# puxar dados do banco online
+npx prisma db pull
+
+# adicionar migration
+npx prisma migrate dev --name "nome_migracao"
+```
+
 #### Prisma ORM
 
 ```bash
