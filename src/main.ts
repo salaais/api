@@ -10,24 +10,25 @@ async function bootstrap() {
 
   // Configuração CORS dinâmica para múltiplas origens
   app.enableCors({
-    // origin: (origin, callback) => {
-    //   // Permite qualquer origem para a rota do Swagger
-    //   if (origin === undefined || origin.includes('/swagger')) {
-    //     callback(null, true);
-    //   } else {
-    //     const allowedOrigins = [
-    //       'http://localhost:3000',
-    //       'http://localhost:3001',
-    //       'https://api-seven-amber.vercel.app/',
-    //     ];
-    //     if (allowedOrigins.includes(origin)) {
-    //       callback(null, true);
-    //     } else {
-    //       callback(new Error('Not allowed by CORS'));
-    //     }
-    //   }
-    // },
-    origin: '*',
+    origin: (origin, callback) => {
+      // Permite qualquer origem para a rota do Swagger
+      if (origin === undefined || origin.includes('/swagger')) {
+        callback(null, true);
+      } else {
+        const allowedOrigins = [
+          'http://localhost:3000',
+          'http://localhost:3001',
+          'https://api-seven-amber.vercel.app',
+          'https://salaais.vercel.app',
+        ];
+        if (allowedOrigins.includes(origin)) {
+          callback(null, true);
+        } else {
+          callback(new Error('Not allowed by CORS'));
+        }
+      }
+    },
+    // origin: '*',
     methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
     allowedHeaders: [
       'Content-Type',
