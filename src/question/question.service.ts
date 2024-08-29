@@ -144,126 +144,142 @@ export class QuestionService {
   async createQuestionsTsv(createQuestion: CreateQuestionsTsvDto) {
     // Converter os dados para o formato com representações visuais
     const formattedData = this.convertToTSVFormat(createQuestion.tsv_values);
-
+  
     // Usar parseTSV para obter os dados em formato de linhas e colunas
     const rows = await this.parseTSV(formattedData);
-
+  
     // Ignorar a primeira linha (cabeçalhos)
     rows.shift();
-
-    // Para armazenar informações de adição e alteração
+  
+    // Arrays para armazenar informações de adição e alteração
     const questoesAdicionadas: string[] = [];
     const questoesAlteradas: string[] = [];
-
-    for (const row of rows) {
-      const [
-        id,
-        blocoNumero,
-        materiaAbreviacao,
-        questaoTexto,
-        a,
-        b,
-        c,
-        d,
-        alternativaCorreta,
-      ] = row;
-
-      const blocoNumeroInt = parseInt(blocoNumero, 10);
-
-      if (isNaN(blocoNumeroInt)) {
-        console.error(`Invalid blocoNumero: ${blocoNumero}`);
-        continue;
-      }
-
-      // Find or create the Materia
-      const materia = await this.prisma.materia.upsert({
-        where: { key: normalizeString(materiaAbreviacao) },
-        update: {},
-        create: {
-          key: normalizeString(materiaAbreviacao.trim()),
-          nome: '',
-          descricao: '',
-        },
-      });
-
-      // Find or create the Curso
-      const curso = await this.prisma.curso.upsert({
-        where: { key: 'cms' }, // Assumindo 'cms' como constante ou precisa ser dinâmico
-        update: {},
-        create: {
-          key: 'cms',
-          nome: '',
-          descricao: '',
-        },
-      });
-
-      // Find or create the Bloco
-      const bloco = await this.prisma.bloco.upsert({
-        where: {
-          id_curso_key: {
+  
+    // Arrays para armazenar os dados que serão criados ou atualizados em lote
+    const questoesParaCriar = [];
+    const questoesParaAtualizar = [];
+  
+    // Iniciar transação Prisma
+    await this.prisma.$transaction(async (prisma) => {
+      for (const row of rows) {
+        const [
+          id,
+          blocoNumero,
+          materiaAbreviacao,
+          questaoTexto,
+          a,
+          b,
+          c,
+          d,
+          alternativaCorreta,
+        ] = row;
+  
+        const blocoNumeroInt = parseInt(blocoNumero, 10);
+  
+        if (isNaN(blocoNumeroInt)) {
+          console.error(`Invalid blocoNumero: ${blocoNumero}`);
+          continue;
+        }
+  
+        // Validação de dados essenciais
+        if (!id || !materiaAbreviacao || !questaoTexto || !a || !b || !c || !d || !alternativaCorreta) {
+          console.error(`Dados inválidos na linha: ${row}`);
+          continue;
+        }
+  
+        // Find or create the Materia
+        const materia = await prisma.materia.upsert({
+          where: { key: normalizeString(materiaAbreviacao.trim()) },
+          update: {},
+          create: {
+            key: normalizeString(materiaAbreviacao.trim()),
+            nome: '',
+            descricao: '',
+          },
+        });
+  
+        // Find or create the Curso
+        const curso = await prisma.curso.upsert({
+          where: { key: 'cms' }, // Assumindo 'cms' como constante ou precisa ser dinâmico
+          update: {},
+          create: {
+            key: 'cms',
+            nome: '',
+            descricao: '',
+          },
+        });
+  
+        // Find or create the Bloco
+        const bloco = await prisma.bloco.upsert({
+          where: {
+            id_curso_key: {
+              id_curso: curso.id,
+              key: blocoNumeroInt,
+            },
+          },
+          update: {},
+          create: {
             id_curso: curso.id,
             key: blocoNumeroInt,
           },
-        },
-        update: {},
-        create: {
-          id_curso: curso.id,
-          key: blocoNumeroInt,
-        },
-      });
-
-      // Find or create the MateriaBloco
-      const materiaBloco = await this.prisma.materiaBloco.upsert({
-        where: {
-          id_bloco_id_materia: {
+        });
+  
+        // Find or create the MateriaBloco
+        const materiaBloco = await prisma.materiaBloco.upsert({
+          where: {
+            id_bloco_id_materia: {
+              id_bloco: bloco.id,
+              id_materia: materia.id,
+            },
+          },
+          update: {},
+          create: {
             id_bloco: bloco.id,
             id_materia: materia.id,
           },
-        },
-        update: {},
-        create: {
-          id_bloco: bloco.id,
-          id_materia: materia.id,
-        },
-      });
-
-      // Upsert the Question
-      const existingQuestion = await this.prisma.questao.findUnique({
-        where: { key: id.trim() },
-      });
-
-      const question = await this.prisma.questao.upsert({
-        where: { key: id.trim() },
-        update: {
+        });
+  
+        // Verificar se a questão já existe
+        const existingQuestion = await prisma.questao.findUnique({
+          where: { key: id.trim() },
+        });
+  
+        // Preparar dados para criação ou atualização
+        const questaoData = {
           id_materia_bloco: materiaBloco.id,
-          questao_texto: questaoTexto.trim(),
-          questao_a: a.trim(),
-          questao_b: b.trim(),
-          questao_c: c.trim(),
-          questao_d: d.trim(),
-          alternativa_correta: alternativaCorreta.trim().toLowerCase(),
-        },
-        create: {
-          id_materia_bloco: materiaBloco.id,
-          questao_texto: questaoTexto.trim(),
           key: id.trim(),
+          questao_texto: questaoTexto.trim(),
           questao_a: a.trim(),
           questao_b: b.trim(),
           questao_c: c.trim(),
           questao_d: d.trim(),
           alternativa_correta: alternativaCorreta.trim().toLowerCase(),
-        },
-      });
-
-      if (existingQuestion) {
-        // Se a questão já existia e foi atualizada
-        questoesAlteradas.push(id.trim());
-      } else {
-        // Se a questão foi criada
-        questoesAdicionadas.push(id.trim());
+        };
+  
+        if (existingQuestion) {
+          // Se a questão já existia e foi atualizada
+          questoesParaAtualizar.push({
+            where: { key: id.trim() },
+            data: questaoData,
+          });
+          questoesAlteradas.push(id.trim());
+        } else {
+          // Se a questão foi criada
+          questoesParaCriar.push(questaoData);
+          questoesAdicionadas.push(id.trim());
+        }
       }
-    }
-
+  
+      // Processar as queries em lote
+      if (questoesParaCriar.length > 0) {
+        await prisma.questao.createMany({ data: questoesParaCriar });
+      }
+  
+      for (const questao of questoesParaAtualizar) {
+        await prisma.questao.update(questao);
+      }
+    });
+  
     return {
       numero_adicionadas: questoesAdicionadas.length,
       numero_alteradas: questoesAlteradas.length,
