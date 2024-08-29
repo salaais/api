@@ -20,6 +20,7 @@ async function bootstrap() {
           'http://localhost:3001',
           'https://api-seven-amber.vercel.app',
           'https://salaais.vercel.app',
+          'https://api-salaais-projects.vercel.app',
         ];
         if (allowedOrigins.includes(origin)) {
           callback(null, true);
