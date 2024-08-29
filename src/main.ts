@@ -6,7 +6,7 @@ import { resolve } from 'path';
 import { writeFileSync, mkdirSync, existsSync } from 'fs';
 
 async function bootstrap() {
-  const app = await NestFactory.create(AppModule, { logger: ['log', 'error', 'warn', 'debug', 'verbose'] });
+  const app = await NestFactory.create(AppModule);
 
   // Configuração CORS dinâmica para múltiplas origens
   app.enableCors({
