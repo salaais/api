@@ -433,17 +433,17 @@ export class QuestionService {
   }
 
   async generateTest(request: GenerateTestDto) {
-    const { key } = request;
-  
-    if (!key || key.length === 0) {
+    const { keys } = request;
+
+    if (!keys || keys.length === 0) {
       throw new BadRequestException('Nenhuma chave foi fornecida');
     }
-  
+
     // Buscar as questões diretamente com base nas chaves fornecidas, incluindo as informações de bloco e matéria
     const questoes = await this.prisma.questao.findMany({
       where: {
         key: {
-          in: key, // Filtrar pelas chaves fornecidas
+          in: keys, // Filtrar pelas chaves fornecidas
         },
       },
       include: {
@@ -455,11 +455,13 @@ export class QuestionService {
         },
       },
     });
-  
+
     if (questoes.length === 0) {
-      throw new NotFoundException('Nenhuma questão correspondente às chaves fornecidas foi encontrada');
+      throw new NotFoundException(
+        'Nenhuma questão correspondente às chaves fornecidas foi encontrada',
+      );
     }
-  
+
     // Mapear as questões para incluir informações de matéria e bloco
     const questoesComDetalhes = questoes.map((questao) => ({
       id: questao.id,
@@ -473,13 +475,12 @@ export class QuestionService {
       materia: questao.materia_bloco.meteria?.key || null,
       bloco: questao.materia_bloco.bloco?.key || null,
     }));
-  
+
     return {
       items: questoesComDetalhes.length,
       data: questoesComDetalhes,
     };
   }
-  
 
   async testGrade(request: TestGradeDto) {
     const questionKeys = request.data.map((q) => q.key);
@@ -526,7 +527,7 @@ export class QuestionService {
 
     // Calcula a porcentagem de acertos
     const total_questoes = request.data.length;
-    const total_questoes_encontradas = total_corretas + total_incorretas
+    const total_questoes_encontradas = total_corretas + total_incorretas;
     const porcentagem_acerto = parseFloat(
       ((total_corretas / total_questoes_encontradas) * 100).toFixed(3),
     );

@@ -89,5 +89,5 @@ export class GenerateTestDto {
     ],
   })
   @IsArray()
-  readonly key: string[];
+  readonly keys: string[];
 }
