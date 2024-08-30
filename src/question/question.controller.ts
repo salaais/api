@@ -11,6 +11,7 @@ import { CreateQuestionsTsvDto } from './dto/create-questions-tsv';
 import { AllQuestionsDto } from './dto/all-questions';
 import { GenerateTestDto } from './dto/generate-test';
 import { TestGradeDto } from './dto/test-grade';
+import { GenerateTestRandomDto } from './dto/generate-test-random';
 
 @ApiTags('Questão')
 @Controller('questao')
@@ -35,10 +36,17 @@ export class QuestionController {
     return this.questionService.allQuestions(request);
   }
 
-  @Post('/gerar')
+  @Post('/gerar-prova/aleatoria')
   @ApiOperation({ summary: 'Retorna questões geradas de forma aleatória' })
   @ApiResponse({ status: 200, description: 'success' })
-  async generateQuestions(@Body() request: GenerateTestDto) {
+  async generateTestRandom(@Body() request: GenerateTestRandomDto) {
+    return this.questionService.generateTestRandom(request);
+  }
+
+  @Post('/gerar-prova/normal')
+  @ApiOperation({ summary: 'Retorna questões com base nos keys' })
+  @ApiResponse({ status: 200, description: 'success' })
+  async generateTest(@Body() request: GenerateTestDto) {
     return this.questionService.generateTest(request);
   }
 

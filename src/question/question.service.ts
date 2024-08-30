@@ -3,6 +3,7 @@ import {
   HttpException,
   HttpStatus,
   NotFoundException,
+  BadRequestException,
 } from '@nestjs/common';
 import { PrismaService } from 'src/prisma/prisma.service';
 import { CreateQuestionsTsvDto } from './dto/create-questions-tsv';
@@ -12,6 +13,7 @@ import { AllQuestionsDto } from './dto/all-questions';
 import { normalizeString } from '../utils';
 import { GenerateTestDto } from './dto/generate-test';
 import { TestGradeDto } from './dto/test-grade';
+import { GenerateTestRandomDto } from './dto/generate-test-random';
 
 @Injectable()
 export class QuestionService {
@@ -369,7 +371,7 @@ export class QuestionService {
     };
   }
 
-  async generateTest(request: GenerateTestDto) {
+  async generateTestRandom(request: GenerateTestRandomDto) {
     const { curso, questoes_por_bloco, blocos } = request;
 
     // Primeiro, filtramos o curso especificado
@@ -429,6 +431,55 @@ export class QuestionService {
       data: questoesPlanas,
     };
   }
+
+  async generateTest(request: GenerateTestDto) {
+    const { key } = request;
+  
+    if (!key || key.length === 0) {
+      throw new BadRequestException('Nenhuma chave foi fornecida');
+    }
+  
+    // Buscar as questões diretamente com base nas chaves fornecidas, incluindo as informações de bloco e matéria
+    const questoes = await this.prisma.questao.findMany({
+      where: {
+        key: {
+          in: key, // Filtrar pelas chaves fornecidas
+        },
+      },
+      include: {
+        materia_bloco: {
+          include: {
+            meteria: true,
+            bloco: true,
+          },
+        },
+      },
+    });
+  
+    if (questoes.length === 0) {
+      throw new NotFoundException('Nenhuma questão correspondente às chaves fornecidas foi encontrada');
+    }
+  
+    // Mapear as questões para incluir informações de matéria e bloco
+    const questoesComDetalhes = questoes.map((questao) => ({
+      id: questao.id,
+      key: questao.key,
+      questao_texto: questao.questao_texto,
+      questao_a: questao.questao_a,
+      questao_b: questao.questao_b,
+      questao_c: questao.questao_c,
+      questao_d: questao.questao_d,
+      alternativa_correta: questao.alternativa_correta,
+      materia: questao.materia_bloco.meteria?.key || null,
+      bloco: questao.materia_bloco.bloco?.key || null,
+    }));
+  
+    return {
+      items: questoesComDetalhes.length,
+      data: questoesComDetalhes,
+    };
+  }
+  
 
   async testGrade(request: TestGradeDto) {
     const questionKeys = request.data.map((q) => q.key);
