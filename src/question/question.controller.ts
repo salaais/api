@@ -17,7 +17,7 @@ import { TestGradeDto } from './dto/test-grade';
 export class QuestionController {
   constructor(private readonly questionService: QuestionService) {}
 
-  @Post('/tsv')
+  @Post('/cadastro/tsv')
   //   @ApiBearerAuth()
   //   @UseGuards(JwtAuthGuard)
   @ApiOperation({ summary: 'Cadastrar questões saparadas por espaços' })
@@ -26,7 +26,7 @@ export class QuestionController {
     return this.questionService.createQuestionsTsv(request);
   }
 
-  @Post('/todas')
+  @Post('/filtrar')
   //   @ApiBearerAuth()
   //   @UseGuards(JwtAuthGuard)
   @ApiOperation({ summary: 'Retornar Todas as questões funcionando: Key' })

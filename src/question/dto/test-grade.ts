@@ -15,15 +15,15 @@ class QuestionDto {
   key: string;
 
   @IsString()
-  questao: string;
+  alternativa: string;
 }
 
 export class TestGradeDto {
   @ApiProperty({
     example: [
-      { key: 'cms-22', questao: 'c' },
-      { key: 'cms-220', questao: 'd' },
-      { key: 'cms-221', questao: 'c' },
+      { key: 'cms-22', alternativa: 'c' },
+      { key: 'cms-220', alternativa: 'd' },
+      { key: 'cms-221', alternativa: 'c' },
     ],
   })
   @IsArray()

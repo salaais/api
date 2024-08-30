@@ -142,134 +142,184 @@ export class QuestionService {
   // }
 
   async createQuestionsTsv(createQuestion: CreateQuestionsTsvDto) {
-    // Converter os dados para o formato com representações visuais
-    const formattedData = this.convertToTSVFormat(createQuestion.tsv_values);
+    try {
+      // Converter os dados para o formato com representações visuais
+      const formattedData = this.convertToTSVFormat(createQuestion.tsv_values);
 
-    // Usar parseTSV para obter os dados em formato de linhas e colunas
-    const rows = await this.parseTSV(formattedData);
+      // Usar parseTSV para obter os dados em formato de linhas e colunas
+      const rows = await this.parseTSV(formattedData);
 
-    // Ignorar a primeira linha (cabeçalhos)
-    rows.shift();
-
-    // Para armazenar informações de adição e alteração
-    const questoesAdicionadas: string[] = [];
-    const questoesAlteradas: string[] = [];
-
-    for (const row of rows) {
-      const [
-        id,
-        blocoNumero,
-        materiaAbreviacao,
-        questaoTexto,
-        a,
-        b,
-        c,
-        d,
-        alternativaCorreta,
-      ] = row;
-
-      const blocoNumeroInt = parseInt(blocoNumero, 10);
-
-      if (isNaN(blocoNumeroInt)) {
-        console.error(`Invalid blocoNumero: ${blocoNumero}`);
-        continue;
+      // Verificar se há linhas
+      if (rows.length === 0) {
+        throw new Error('No data found in TSV');
       }
 
-      // Find or create the Materia
-      const materia = await this.prisma.materia.upsert({
-        where: { key: normalizeString(materiaAbreviacao) },
-        update: {},
-        create: {
-          key: normalizeString(materiaAbreviacao.trim()),
-          nome: '',
-          descricao: '',
-        },
-      });
+      // Obter e mapear cabeçalhos
+      const headers = rows[0].map((header) => normalizeString(header));
+      const columnIndex = {
+        id: headers.indexOf(normalizeString('KEY')),
+        blocoNumero: headers.indexOf(normalizeString('BLOCO')),
+        materiaAbreviacao: headers.indexOf(normalizeString('MATÉRIA')),
+        questaoTexto: headers.indexOf(normalizeString('PERGUNTA')),
+        a: headers.indexOf(normalizeString('A')),
+        b: headers.indexOf(normalizeString('B')),
+        c: headers.indexOf(normalizeString('C')),
+        d: headers.indexOf(normalizeString('D')),
+        alternativaCorreta: headers.indexOf(normalizeString('RESPOSTA')),
+      };
 
-      // Find or create the Curso
-      const curso = await this.prisma.curso.upsert({
-        where: { key: 'cms' }, // Assumindo 'cms' como constante ou precisa ser dinâmico
-        update: {},
-        create: {
-          key: 'cms',
-          nome: '',
-          descricao: '',
-        },
-      });
+      // Verifique se todos os índices foram encontrados
+      for (const key in columnIndex) {
+        if (columnIndex[key] === -1) {
+          throw new Error(`Header column '${key}' not found in TSV`);
+        }
+      }
 
-      // Find or create the Bloco
-      const bloco = await this.prisma.bloco.upsert({
-        where: {
-          id_curso_key: {
+      // Ignorar a primeira linha (cabeçalhos)
+      rows.shift();
+
+      // Para armazenar informações de adição e alteração
+      const questoesAdicionadas: string[] = [];
+      const questoesAlteradas: string[] = [];
+
+      for (const row of rows) {
+        // Verificar se a linha tem o número correto de colunas
+        if (row.length < Object.keys(columnIndex).length) {
+          console.error('Row has fewer columns than expected:', row);
+          continue;
+        }
+
+        const [
+          id,
+          blocoNumero,
+          materiaAbreviacao,
+          questaoTexto,
+          a,
+          b,
+          c,
+          d,
+          alternativaCorreta,
+        ] = [
+          row[columnIndex.id]?.trim() || '',
+          row[columnIndex.blocoNumero]?.trim() || '',
+          row[columnIndex.materiaAbreviacao]?.trim() || '',
+          row[columnIndex.questaoTexto]?.trim() || '',
+          row[columnIndex.a]?.trim() || '',
+          row[columnIndex.b]?.trim() || '',
+          row[columnIndex.c]?.trim() || '',
+          row[columnIndex.d]?.trim() || '',
+          row[columnIndex.alternativaCorreta]?.trim() || '',
+        ];
+
+        const blocoNumeroInt = parseInt(blocoNumero, 10);
+
+        if (isNaN(blocoNumeroInt)) {
+          console.error(`Invalid blocoNumero: ${blocoNumero}`);
+          continue;
+        }
+
+        // Transformar o ID para minúsculas
+        const idLower = id.toLowerCase();
+
+        // Find or create the Materia
+        const materia = await this.prisma.materia.upsert({
+          where: { key: normalizeString(materiaAbreviacao).toLowerCase() },
+          update: {},
+          create: {
+            key: normalizeString(materiaAbreviacao.trim()).toLowerCase(),
+            nome: '',
+            descricao: '',
+          },
+        });
+
+        // Find or create the Curso
+        const curso = await this.prisma.curso.upsert({
+          where: { key: 'cms' }, // Assumindo 'cms' como constante ou precisa ser dinâmico
+          update: {},
+          create: {
+            key: 'cms',
+            nome: '',
+            descricao: '',
+          },
+        });
+
+        // Find or create the Bloco
+        const bloco = await this.prisma.bloco.upsert({
+          where: {
+            id_curso_key: {
+              id_curso: curso.id,
+              key: blocoNumeroInt,
+            },
+          },
+          update: {},
+          create: {
             id_curso: curso.id,
             key: blocoNumeroInt,
           },
-        },
-        update: {},
-        create: {
-          id_curso: curso.id,
-          key: blocoNumeroInt,
-        },
-      });
+        });
 
-      // Find or create the MateriaBloco
-      const materiaBloco = await this.prisma.materiaBloco.upsert({
-        where: {
-          id_bloco_id_materia: {
+        // Find or create the MateriaBloco
+        const materiaBloco = await this.prisma.materiaBloco.upsert({
+          where: {
+            id_bloco_id_materia: {
+              id_bloco: bloco.id,
+              id_materia: materia.id,
+            },
+          },
+          update: {},
+          create: {
             id_bloco: bloco.id,
             id_materia: materia.id,
           },
-        },
-        update: {},
-        create: {
-          id_bloco: bloco.id,
-          id_materia: materia.id,
-        },
-      });
+        });
 
-      // Upsert the Question
-      const existingQuestion = await this.prisma.questao.findUnique({
-        where: { key: id.trim() },
-      });
+        // Upsert the Question
+        const existingQuestion = await this.prisma.questao.findUnique({
+          where: { key: idLower },
+        });
 
-      const question = await this.prisma.questao.upsert({
-        where: { key: id.trim() },
-        update: {
-          id_materia_bloco: materiaBloco.id,
-          questao_texto: questaoTexto.trim(),
-          questao_a: a.trim(),
-          questao_b: b.trim(),
-          questao_c: c.trim(),
-          questao_d: d.trim(),
-          alternativa_correta: alternativaCorreta.trim().toLowerCase(),
-        },
-        create: {
-          id_materia_bloco: materiaBloco.id,
-          questao_texto: questaoTexto.trim(),
-          key: id.trim(),
-          questao_a: a.trim(),
-          questao_b: b.trim(),
-          questao_c: c.trim(),
-          questao_d: d.trim(),
-          alternativa_correta: alternativaCorreta.trim().toLowerCase(),
-        },
-      });
+        const question = await this.prisma.questao.upsert({
+          where: { key: idLower },
+          update: {
+            id_materia_bloco: materiaBloco.id,
+            questao_texto: questaoTexto,
+            questao_a: a,
+            questao_b: b,
+            questao_c: c,
+            questao_d: d,
+            alternativa_correta: alternativaCorreta.toLowerCase(),
+          },
+          create: {
+            id_materia_bloco: materiaBloco.id,
+            questao_texto: questaoTexto,
+            key: idLower,
+            questao_a: a,
+            questao_b: b,
+            questao_c: c,
+            questao_d: d,
+            alternativa_correta: alternativaCorreta.toLowerCase(),
+          },
+        });
 
-      if (existingQuestion) {
-        // Se a questão já existia e foi atualizada
-        questoesAlteradas.push(id.trim());
-      } else {
-        // Se a questão foi criada
-        questoesAdicionadas.push(id.trim());
+        if (existingQuestion) {
+          // Se a questão já existia e foi atualizada
+          questoesAlteradas.push(idLower);
+        } else {
+          // Se a questão foi criada
+          questoesAdicionadas.push(idLower);
+        }
       }
-    }
 
-    return {
-      numero_adicionadas: questoesAdicionadas.length,
-      numero_alteradas: questoesAlteradas.length,
-      questoes_adicionadas: questoesAdicionadas,
-      questoes_alteradas: questoesAlteradas,
-    };
+      return {
+        numero_adicionadas: questoesAdicionadas.length,
+        numero_alteradas: questoesAlteradas.length,
+        questoes_adicionadas: questoesAdicionadas,
+        questoes_alteradas: questoesAlteradas,
+      };
+    } catch (error) {
+      console.error('Error creating questions from TSV:', error);
+      throw new Error('Failed to create questions from TSV');
+    }
   }
 
   async allQuestions(allQuestions: AllQuestionsDto) {
@@ -395,40 +445,51 @@ export class QuestionService {
     // Variáveis para calcular acertos e armazenar as chaves das questões corretas e erradas
     let total_corretas = 0;
     let total_incorretas = 0;
+    let total_nao_encontradas = 0;
     const respostas_corretas: string[] = [];
     const respostas_incorretas: string[] = [];
+    const respostas_nao_encontradas: string[] = [];
 
     // Verifica as respostas fornecidas contra as corretas
     request.data.forEach((questionRequest) => {
       const correctQuestion = questionsFromDB.find(
-        (q) => q.key === questionRequest.key,
+        (q) => q.key.toLowerCase() === questionRequest.key.toLowerCase(),
       );
-      if (
-        correctQuestion &&
-        correctQuestion.alternativa_correta === questionRequest.questao
-      ) {
-        total_corretas++;
-        respostas_corretas.push(questionRequest.key);
+
+      if (correctQuestion) {
+        if (
+          correctQuestion.alternativa_correta.trim().toLowerCase() ===
+          questionRequest.alternativa.trim().toLowerCase()
+        ) {
+          total_corretas++;
+          respostas_corretas.push(questionRequest.key);
+        } else {
+          total_incorretas++;
+          respostas_incorretas.push(questionRequest.key);
+        }
       } else {
-        total_incorretas++;
-        respostas_incorretas.push(questionRequest.key);
+        total_nao_encontradas++;
+        respostas_nao_encontradas.push(questionRequest.key);
       }
     });
 
     // Calcula a porcentagem de acertos
     const total_questoes = request.data.length;
+    const total_questoes_encontradas = total_corretas + total_incorretas
     const porcentagem_acerto = parseFloat(
-      ((total_corretas / total_questoes) * 100).toFixed(3),
+      ((total_corretas / total_questoes_encontradas) * 100).toFixed(3),
     );
 
-    // Retorna a porcentagem de acertos, chaves das questões corretas e erradas
+    // Retorna a porcentagem de acertos, chaves das questões corretas, erradas e não encontradas
     return {
-      total_incorretas,
       total_corretas,
+      total_incorretas,
+      total_nao_encontradas,
       total_questoes,
       porcentagem_acerto,
       respostas_corretas, // Lista de chaves das questões corretas
       respostas_incorretas, // Lista de chaves das questões erradas
+      respostas_nao_encontradas, // Lista de chaves das questões não encontradas
     };
   }
 
