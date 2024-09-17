@@ -14,6 +14,7 @@ import { normalizeString } from '../utils';
 import { GenerateTestDto } from './dto/generate-test';
 import { TestGradeDto } from './dto/test-grade';
 import { GenerateTestRandomDto } from './dto/generate-test-random';
+import { QuestionBySubject } from './dto/questao-por-materia';
 
 @Injectable()
 export class QuestionService {
@@ -475,6 +476,73 @@ export class QuestionService {
       materia: questao.materia_bloco.meteria?.key || null,
       bloco: questao.materia_bloco.bloco?.key || null,
     }));
+
+    return {
+      items: questoesComDetalhes.length,
+      data: questoesComDetalhes,
+    };
+  }
+
+  async generateTestBySubject(request: QuestionBySubject) {
+    const { questao_por_materia } = request;
+
+    // Verificar se a lista de questões por matéria foi fornecida
+    if (!questao_por_materia || questao_por_materia.length === 0) {
+      throw new BadRequestException('Nenhuma matéria foi fornecida');
+    }
+
+    let questoesComDetalhes = [];
+
+    // Iterar sobre cada item de curso e matéria para buscar as questões correspondentes
+    for (const questaoRequest of questao_por_materia) {
+      const { curso, materia, quantidade_questoes } = questaoRequest;
+
+      // Buscar as questões correspondentes ao curso e matéria, respeitando o limite da quantidade requisitada
+      const questoes = await this.prisma.questao.findMany({
+        where: {
+          materia_bloco: {
+            bloco: {
+              curso: { key: curso }, // Verificar pelo curso
+            },
+            meteria: { key: materia }, // Verificar pela matéria
+          },
+        },
+        take: quantidade_questoes, // Limitar ao número solicitado
+        orderBy: { id: 'asc' }, // Ordenar de forma sequencial (por ID)
+        include: {
+          materia_bloco: {
+            include: {
+              meteria: true,
+              bloco: true,
+            },
+          },
+        },
+      });
+
+      // Caso não encontre questões, lançar uma exceção
+      if (questoes.length === 0) {
+        throw new NotFoundException(
+          `Nenhuma questão encontrada para o curso ${curso} e matéria ${materia}`,
+        );
+      }
+
+      // Mapear as questões para o formato desejado
+      const questoesMapeadas = questoes.map((questao) => ({
+        id: questao.id,
+        key: questao.key,
+        questao_texto: questao.questao_texto,
+        questao_a: questao.questao_a,
+        questao_b: questao.questao_b,
+        questao_c: questao.questao_c,
+        questao_d: questao.questao_d,
+        alternativa_correta: questao.alternativa_correta,
+        materia: questao.materia_bloco.meteria?.key || null,
+        bloco: questao.materia_bloco.bloco?.key || null,
+      }));
+
+      // Adicionar as questões mapeadas ao resultado final
+      questoesComDetalhes = [...questoesComDetalhes, ...questoesMapeadas];
+    }
 
     return {
       items: questoesComDetalhes.length,

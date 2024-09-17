@@ -12,6 +12,7 @@ import { AllQuestionsDto } from './dto/all-questions';
 import { GenerateTestDto } from './dto/generate-test';
 import { TestGradeDto } from './dto/test-grade';
 import { GenerateTestRandomDto } from './dto/generate-test-random';
+import { QuestionBySubject } from './dto/questao-por-materia';
 
 @ApiTags('Questão')
 @Controller('questao')
@@ -48,6 +49,13 @@ export class QuestionController {
   @ApiResponse({ status: 200, description: 'success' })
   async generateTest(@Body() request: GenerateTestDto) {
     return this.questionService.generateTest(request);
+  }
+
+  @Post('/gerar-prova/materia')
+  @ApiOperation({ summary: 'Retorna questões com base nos keys' })
+  @ApiResponse({ status: 200, description: 'success' })
+  async generateTestBySubject(@Body() request: QuestionBySubject) {
+    return this.questionService.generateTestBySubject(request);
   }
 
   @Post('/correcao_simples')
