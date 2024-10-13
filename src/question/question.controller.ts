@@ -24,7 +24,7 @@ export class QuestionController {
   //   @UseGuards(JwtAuthGuard)
   @ApiOperation({ summary: 'Cadastrar questões saparadas por espaços' })
   @ApiResponse({ status: 201, description: 'created' })
-  async createQuestionsSpaces(@Body() request: CreateQuestionsTsvDto) {
+  async createQuestionsTsv(@Body() request: CreateQuestionsTsvDto) {
     return this.questionService.createQuestionsTsv(request);
   }
 

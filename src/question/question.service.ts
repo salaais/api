@@ -169,6 +169,7 @@ export class QuestionService {
         c: headers.indexOf(normalizeString('C')),
         d: headers.indexOf(normalizeString('D')),
         alternativaCorreta: headers.indexOf(normalizeString('RESPOSTA')),
+        descricao: headers.indexOf(normalizeString('DESCRIÇÃO')),
       };
 
       // Verifique se todos os índices foram encontrados
@@ -202,6 +203,7 @@ export class QuestionService {
           c,
           d,
           alternativaCorreta,
+          descricao_questao,
         ] = [
           row[columnIndex.id]?.trim() || '',
           row[columnIndex.blocoNumero]?.trim() || '',
@@ -212,6 +214,7 @@ export class QuestionService {
           row[columnIndex.c]?.trim() || '',
           row[columnIndex.d]?.trim() || '',
           row[columnIndex.alternativaCorreta]?.trim() || '',
+          row[columnIndex.descricao]?.trim() || '',
         ];
 
         const blocoNumeroInt = parseInt(blocoNumero, 10);
@@ -291,6 +294,9 @@ export class QuestionService {
             questao_c: c,
             questao_d: d,
             alternativa_correta: alternativaCorreta.toLowerCase(),
+            descricao:
+              descricao_questao ||
+              `A alternativa correta é ${alternativaCorreta.toLowerCase()}`,
           },
           create: {
             id_materia_bloco: materiaBloco.id,
@@ -301,6 +307,9 @@ export class QuestionService {
             questao_c: c,
             questao_d: d,
             alternativa_correta: alternativaCorreta.toLowerCase(),
+            descricao:
+              descricao_questao ||
+              `A alternativa correta é ${alternativaCorreta.toLowerCase()}`,
           },
         });
 

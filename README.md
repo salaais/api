@@ -92,6 +92,7 @@ npm i -D ts-node typescript @types/node
 ```
 
 #### Prisma Migration Baseline
+
 ```bash
 # estrututaçao dos dados de forma inicial
 npx prisma migrate dev --create-only --name baseline
@@ -99,6 +100,7 @@ npx prisma migrate dev --create-only --name baseline
 ```
 
 #### Sync with data base
+
 ```bash
 # Puxar dados existentes do banco para o schema.prisma
 npx prisma db pull
@@ -157,6 +159,23 @@ npx prisma db seed
 | Post | http://localhost:3000/auth/login | authenticate an user |
 
 https://www.prisma.io/blog/nestjs-prisma-authentication-7D056s1s0k3l#implement-authentication-in-your-rest-api
+
+#### BACKUP LOCAL
+
+```
+# abrir o cmd
+
+# exportar backup dados
+pg_dump -h aws-0-sa-east-1.pooler.supabase.com -p 6543 -U postgres.kgzqdqdwxhbgfrzblqer -d postgres -W -F c -b -v -f backup.dump
+
+# importar backup em um banco de dados
+pg_restore -h <host> -p <port> -U <user> -d <database_name> -W -v <backup_file>.dump
+
+# importar backup em um banco de dados 
+pg_restore -h aws-0-sa-east-1.pooler.supabase.com -p 6543 -U postgres -d postgres -W -v test.dump
+
+
+```
 
 #### Achtecture
 

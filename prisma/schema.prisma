@@ -23,8 +23,8 @@ model Usuario {
 
 model TipoLogin {
   id        Int       @id @default(autoincrement())
-  key       String    @unique
   descricao String
+  key       String    @unique
   Usuario   Usuario[]
 }
 
@@ -45,31 +45,31 @@ model RegraPermissao {
 
 model Permissao {
   id               Int                @id @default(autoincrement())
-  key              String             @unique
   descricao        String
+  key              String             @unique
   PermissaoUsuario PermissaoUsuario[]
   RegraPermissao   RegraPermissao[]
 }
 
 model Regra {
   id             Int              @id @default(autoincrement())
-  key            String           @unique
   descricao      String
+  key            String           @unique
   RegraPermissao RegraPermissao[]
 }
 
 model Curso {
   id        Int     @id @default(autoincrement())
-  key       String  @unique
   nome      String
   descricao String
+  key       String  @unique
   bloco     Bloco[]
 }
 
 model Bloco {
   id            Int            @id @default(autoincrement())
-  key           Int            @unique
   id_curso      Int
+  key           Int            @unique
   curso         Curso          @relation(fields: [id_curso], references: [id], onDelete: Cascade)
   materia_bloco MateriaBloco[]
 
@@ -78,9 +78,9 @@ model Bloco {
 
 model Materia {
   id            Int            @id @default(autoincrement())
-  key           String         @unique
   nome          String
   descricao     String
+  key           String         @unique
   materia_bloco MateriaBloco[]
 }
 
@@ -98,12 +98,13 @@ model MateriaBloco {
 model Questao {
   id                  Int          @id @default(autoincrement())
   id_materia_bloco    Int
-  key                 String       @unique
   questao_texto       String
   questao_a           String
   questao_b           String
   questao_c           String
   questao_d           String
   alternativa_correta String
+  key                 String       @unique
+  descricao           String?
   materia_bloco       MateriaBloco @relation(fields: [id_materia_bloco], references: [id], onDelete: Cascade)
 }
