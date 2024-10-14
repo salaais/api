@@ -163,18 +163,16 @@ https://www.prisma.io/blog/nestjs-prisma-authentication-7D056s1s0k3l#implement-a
 #### BACKUP LOCAL
 
 ```
-# abrir o cmd
+# abrir o CMD
 
 # exportar backup dados
-pg_dump -h aws-0-sa-east-1.pooler.supabase.com -p 6543 -U postgres.kgzqdqdwxhbgfrzblqer -d postgres -W -F c -b -v -f backup.dump
+pg_dump -h <host> -p <port> -U <user> -d <database_name> -W -F c -b -v -f <backup_file>.dump
 
 # importar backup em um banco de dados
 pg_restore -h <host> -p <port> -U <user> -d <database_name> -W -v <backup_file>.dump
 
 # importar backup em um banco de dados 
-pg_restore -h aws-0-sa-east-1.pooler.supabase.com -p 6543 -U postgres -d postgres -W -v test.dump
-
-
+pg_restore --no-owner --no-privileges --no-comments --data-only -d "postgresql://..." backup.dump
 ```
 
 #### Achtecture
