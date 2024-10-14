@@ -106,5 +106,6 @@ model Questao {
   alternativa_correta String
   key                 String       @unique
   descricao           String?
+  test                String?
   materia_bloco       MateriaBloco @relation(fields: [id_materia_bloco], references: [id], onDelete: Cascade)
 }
