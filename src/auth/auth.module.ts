@@ -6,7 +6,7 @@ import { JwtModule } from '@nestjs/jwt';
 import { PrismaModule } from '../prisma/prisma.module';
 import { UsersModule } from '../users/users.module'; // Importa o UsersModule
 import { JwtStrategy } from './jwt.strategy';
-import { PermissionModule } from 'src/permission/permission.module';
+import { PermissionModule } from '../permission/permission.module';
 
 @Module({
   imports: [

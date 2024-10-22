@@ -124,6 +124,7 @@ npx prisma migrate dev --name "nome_migracao"
 ```bash
 # mark as resolved migration
 npx prisma migrate resolve --applied "20241022005342_regra_permissoes_chavas_unicas"
+
 npx prisma db push
 
 # unmark as resolved migration
@@ -131,8 +132,21 @@ npx prisma migrate resolve --rolled-back "20241022005342_regra_permissoes_chavas
 
 ```
 
-#### Prisma ORM
+#### Testar Vercel
+```bash
+vercel dev --debug
+```
 
+#### Reset
+```bash
+npm cache clean --force
+rm -rf node_modules
+npm install
+npm run build
+```
+
+
+#### Prisma ORM
 ```bash
 # usar o shadow database
 npx prisma migrate dev --name migration_name

@@ -24,8 +24,8 @@ import { Permissions as PermissionsDecorator } from '../permission/permissions.d
 import { UserEntity } from './entities/user.entity';
 import { JwtAuthGuard } from '../auth/jwt-auth.guard';
 import { RemoveUserDto } from './dto/remove-user.dto';
-import { Permissions, UserPermissions } from 'src/permission/enum/permission.enum';
-import { PermissionsGuard } from 'src/permission/permissions.guard';
+import { UserPermissions } from '../permission/enum/permission.enum';
+import { PermissionsGuard } from '../permission/permissions.guard';
 
 @ApiTags('Usuario')
 @Controller('usuario')
