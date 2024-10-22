@@ -351,7 +351,7 @@ export class QuestionService {
       include: {
         materia_bloco: {
           include: {
-            meteria: {
+            materia: {
               select: {
                 key: true,
               },
@@ -369,7 +369,7 @@ export class QuestionService {
     // Formata o retorno para incluir as chaves Materia e Bloco
     const formattedQuestions = questions.map((question) => ({
       ...question,
-      materia: question.materia_bloco.meteria.key,
+      materia: question.materia_bloco.materia.key,
       bloco: question.materia_bloco.bloco.key,
       materia_bloco: undefined,
       id_materia_bloco: undefined,
@@ -394,7 +394,7 @@ export class QuestionService {
           include: {
             materia_bloco: {
               include: {
-                meteria: true,
+                materia: true,
                 questao: true,
               },
             },
@@ -422,7 +422,7 @@ export class QuestionService {
         const questoes = bloco.materia_bloco.flatMap((materiaBloco) =>
           materiaBloco.questao.map((questao) => ({
             ...questao,
-            materia: materiaBloco.meteria.key,
+            materia: materiaBloco.materia.key,
             bloco: bloco.key,
           })),
         );
@@ -459,7 +459,7 @@ export class QuestionService {
       include: {
         materia_bloco: {
           include: {
-            meteria: true,
+            materia: true,
             bloco: true,
           },
         },
@@ -482,7 +482,7 @@ export class QuestionService {
       questao_c: questao.questao_c,
       questao_d: questao.questao_d,
       alternativa_correta: questao.alternativa_correta,
-      materia: questao.materia_bloco.meteria?.key || null,
+      materia: questao.materia_bloco.materia?.key || null,
       bloco: questao.materia_bloco.bloco?.key || null,
     }));
 
@@ -513,7 +513,7 @@ export class QuestionService {
             bloco: {
               curso: { key: curso }, // Verificar pelo curso
             },
-            meteria: { key: materia }, // Verificar pela matéria
+            materia: { key: materia }, // Verificar pela matéria
           },
         },
         take: quantidade_questoes, // Limitar ao número solicitado
@@ -521,7 +521,7 @@ export class QuestionService {
         include: {
           materia_bloco: {
             include: {
-              meteria: true,
+              materia: true,
               bloco: true,
             },
           },
@@ -545,7 +545,7 @@ export class QuestionService {
         questao_c: questao.questao_c,
         questao_d: questao.questao_d,
         alternativa_correta: questao.alternativa_correta,
-        materia: questao.materia_bloco.meteria?.key || null,
+        materia: questao.materia_bloco.materia?.key || null,
         bloco: questao.materia_bloco.bloco?.key || null,
       }));
 

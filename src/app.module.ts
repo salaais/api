@@ -7,6 +7,7 @@ import { AuthModule } from './auth/auth.module';
 import { ServeStaticModule } from '@nestjs/serve-static';
 import { join } from 'path';
 import { QuestionModule } from './question/question.module';
+import { PermissionModule } from './permission/permission.module';
 
 @Module({
   imports: [
@@ -18,6 +19,7 @@ import { QuestionModule } from './question/question.module';
       serveRoot: '/swagger',
     }),
     QuestionModule,
+    PermissionModule,
   ],
   controllers: [AppController],
   providers: [AppService],

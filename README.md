@@ -78,7 +78,7 @@ npm install @nestjs/jwt @nestjs/passport passport passport-jwt bcrypt
 nest g module prisma
 nest g service prisma
 
-nest g module users
+nest g mo users || nest generate module users
 nest g controller users
 nest g service users
 
@@ -120,6 +120,17 @@ npx prisma db pull
 npx prisma migrate dev --name "nome_migracao"
 ```
 
+
+```bash
+# mark as resolved migration
+npx prisma migrate resolve --applied "20241022005342_regra_permissoes_chavas_unicas"
+npx prisma db push
+
+# unmark as resolved migration
+npx prisma migrate resolve --rolled-back "20241022005342_regra_permissoes_chavas_unicas"
+
+```
+
 #### Prisma ORM
 
 ```bash
@@ -146,6 +157,10 @@ npx prisma migrate dev
 
 # Executa o script de seed para popular o banco de dados com valores padrão
 npx prisma db seed
+
+# verificar se o schema.prima está correto
+npx prisma validate
+
 ```
 
 #### Routes
@@ -165,14 +180,15 @@ https://www.prisma.io/blog/nestjs-prisma-authentication-7D056s1s0k3l#implement-a
 ```
 # abrir o CMD
 
-# exportar backup dados
+# formas de exportar backup dados todo o banco VS apenas os dados
 pg_dump -h <host> -p <port> -U <user> -d <database_name> -W -F c -b -v -f <backup_file>.dump
+pg_dump -h <host> -p <port> -U <user> -d <database_name> -W --data-only -F c -b -v -f <backup_file>.dump
 
-# importar backup em um banco de dados
+
+# formas de importar backup em um banco de dados
 pg_restore -h <host> -p <port> -U <user> -d <database_name> -W -v <backup_file>.dump
-
-# importar backup em um banco de dados 
 pg_restore --no-owner --no-privileges --no-comments --data-only -d "postgresql://..." backup.dump
+
 ```
 
 #### Achtecture

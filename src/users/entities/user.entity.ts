@@ -12,10 +12,10 @@ export class UserEntity implements PrismaUser {
   id: number;
 
   @ApiProperty()
-  created_at: Date;
+  data_criacao: Date;
 
   @ApiProperty()
-  updated_at: Date;
+  data_atualizacao: Date;
 
   @ApiProperty()
   nome: string;
@@ -31,4 +31,7 @@ export class UserEntity implements PrismaUser {
 
   @Exclude()
   senha: string;
+
+  @ApiProperty()
+  bio: string;
 }

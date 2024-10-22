@@ -51,7 +51,7 @@ async function bootstrap() {
     .setDescription(
       'A progressive Node.js framework for building efficient and scalable server-side applications.',
     )
-    .setVersion('1.0')
+    .setVersion('2.0.0')
     .addBearerAuth()
     .build();
 

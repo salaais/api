@@ -1,66 +1,94 @@
-import { HttpException, HttpStatus, Injectable } from '@nestjs/common';
+import {
+  HttpException,
+  HttpStatus,
+  Injectable,
+  UnauthorizedException,
+} from '@nestjs/common';
 import { PrismaService } from '../prisma/prisma.service';
 import { CreateUserDto } from './dto/create-user.dto';
 import * as bcrypt from 'bcrypt';
 import { User } from './interfaces/user.interface';
 import { UpdateUserDto } from './dto/update-user.dto';
 import { Usuario } from '@prisma/client';
+import { JwtService } from '@nestjs/jwt';
 
 export const roundsOfHashing = 10;
 
 @Injectable()
 export class UsersService {
-  constructor(private prisma: PrismaService) {}
+  constructor(
+    private prisma: PrismaService,
+  ) {}
 
   async create(createUserDto: CreateUserDto): Promise<any> {
     // Verificar se o email já existe
     const existingUserByEmail = await this.prisma.usuario.findUnique({
       where: { email: createUserDto.email },
     });
-  
+
     if (existingUserByEmail) {
-      throw new HttpException('Email already exists', HttpStatus.UNPROCESSABLE_ENTITY);
+      throw new HttpException(
+        'Email already exists',
+        HttpStatus.UNPROCESSABLE_ENTITY,
+      );
     }
-  
+
     // Verificar se o username já existe
     const existingUserByUsername = await this.prisma.usuario.findUnique({
       where: { username: createUserDto.username },
     });
-  
+
     if (existingUserByUsername) {
-      throw new HttpException('Username already exists', HttpStatus.UNPROCESSABLE_ENTITY);
+      throw new HttpException(
+        'Username already exists',
+        HttpStatus.UNPROCESSABLE_ENTITY,
+      );
     }
-  
+
     const hashedPassword = await bcrypt.hash(
       createUserDto.password,
       roundsOfHashing,
     );
-  
+
     const { password, tipo_login, ...rest } = createUserDto;
-  
+
     // Buscar o id do TipoLogin com base no nome
     const tipoLogin = await this.prisma.tipoLogin.findUnique({
       where: { key: tipo_login },
     });
-  
+
     if (!tipoLogin) {
-      throw new HttpException('Tipo de login não encontrado', HttpStatus.UNPROCESSABLE_ENTITY);
+      throw new HttpException(
+        'Tipo de login não encontrado',
+        HttpStatus.UNPROCESSABLE_ENTITY,
+      );
     }
-  
+
     const data = {
       ...rest,
       senha: hashedPassword,
       id_tipo_login: tipoLogin.id, // Salvar a referência do id do tipo de login
     };
-  
+
     const createdUser = await this.prisma.usuario.create({
       data,
     });
-  
+
     // Criar uma cópia do objeto excluindo o campo senha
     const { senha, ...userWithoutPassword } = createdUser;
-  
+
     return userWithoutPassword;
+  }
+
+  async findAllSimple() {
+    return this.prisma.usuario.findMany({
+      select: {
+        username: true,
+        nome: true,
+        data_criacao: true,
+        bio: true,
+      },
+    });
   }
 
   async findAll() {
@@ -71,8 +99,45 @@ export class UsersService {
     return this.prisma.usuario.findUnique({ where: { id } });
   }
 
+  async getUserPermissons(id: number) {
+    if (!id) {
+      throw new Error('ID de usuário inválido ou indefinido.');
+    }
+  
+    return this.prisma.usuario.findUnique({
+      where: { id },
+      include: {
+        permissaoUsuario: {
+          include: { permissao: true },
+        },
+      },
+    });
+  }
+
   async remove(id: number): Promise<void> {
     await this.prisma.usuario.delete({ where: { id } });
+  }
+
+  async removeMe(userId: number): Promise<void> {
+    console.log('Removing User ID:', userId); // Para verificar o valor recebido
+
+    if (typeof userId !== 'number' || isNaN(userId)) {
+      throw new UnauthorizedException(
+        'User ID inválido ou não encontrado no token.',
+      );
+    }
+
+    const usuario = await this.prisma.usuario.findUnique({
+      where: { id: userId },
+    });
+
+    if (!usuario) {
+      throw new UnauthorizedException('Usuário não encontrado');
+    }
+
+    await this.prisma.usuario.delete({
+      where: { id: userId },
+    });
   }
 
   async findByEmail(email: string): Promise<Usuario | null> {

@@ -10,15 +10,22 @@ datasource db {
 }
 
 model Usuario {
-  id            Int       @id @default(autoincrement())
-  email         String    @unique
-  username      String    @unique
-  nome          String
-  senha         String
-  created_at    DateTime  @default(now())
-  updated_at    DateTime  @updatedAt
-  id_tipo_login Int
-  tipo_login    TipoLogin @relation(fields: [id_tipo_login], references: [id])
+  id                    Int                     @id @default(autoincrement())
+  email                 String                  @unique
+  username              String                  @unique
+  nome                  String
+  senha                 String
+  id_tipo_login         Int
+  data_atualizacao      DateTime?               @updatedAt
+  data_criacao          DateTime                @default(now())
+  bio                   String?
+  comentarioProva       ComentarioProva[]
+  historicoPagamento    HistoricoPagamento[]
+  historico_prova       HistoricoProva[]
+  permissaoUsuario      PermissaoUsuario[]
+  questaoHistoricoProva QuestaoHistoricoProva[]
+  tipo_login            TipoLogin               @relation(fields: [id_tipo_login], references: [id])
+  usuario_notificacao   UsuarioNotificacao[]
 }
 
 model TipoLogin {
@@ -29,18 +36,26 @@ model TipoLogin {
 }
 
 model PermissaoUsuario {
-  id           Int       @id @default(autoincrement())
-  id_usuario   Int
-  id_permissao Int
-  permissao    Permissao @relation(fields: [id_permissao], references: [id])
+  id             Int       @id @default(autoincrement())
+  id_usuario     Int
+  id_permissao   Int
+  data_criacao   DateTime  @default(now())
+  data_expiracao DateTime  @default(now())
+  permissao      Permissao @relation(fields: [id_permissao], references: [id])
+  usuario        Usuario   @relation(fields: [id_usuario], references: [id])
 }
 
 model RegraPermissao {
-  id           Int       @id @default(autoincrement())
-  id_permissao Int
-  id_regra     Int
-  permissao    Permissao @relation(fields: [id_permissao], references: [id])
-  regra        Regra     @relation(fields: [id_regra], references: [id])
+  id                        Int       @id @default(autoincrement())
+  id_permissao              Int
+  id_regra                  Int
+  contagem_uso              Int?
+  data_resetar_contagem_uso DateTime?
+  limite_contagem_uso       Int?
+  permissao                 Permissao @relation(fields: [id_permissao], references: [id])
+  regra                     Regra     @relation(fields: [id_regra], references: [id])
+
+  @@unique([id_regra, id_permissao])
 }
 
 model Permissao {
@@ -89,7 +104,7 @@ model MateriaBloco {
   id_bloco   Int
   id_materia Int
   bloco      Bloco     @relation(fields: [id_bloco], references: [id], onDelete: Cascade)
-  meteria    Materia   @relation(fields: [id_materia], references: [id], onDelete: Cascade)
+  materia    Materia   @relation(fields: [id_materia], references: [id], onDelete: Cascade)
   questao    Questao[]
 
   @@unique([id_bloco, id_materia])
@@ -107,4 +122,96 @@ model Questao {
   key                 String       @unique
   descricao           String?
   materia_bloco       MateriaBloco @relation(fields: [id_materia_bloco], references: [id], onDelete: Cascade)
+}
+
+model TipoNotificacao {
+  id           Int           @id @default(autoincrement())
+  key          String        @unique
+  nome         String
+  descricao    String
+  notificacoes Notificacao[]
+}
+
+model Notificacao {
+  id                  Int                  @id @default(autoincrement())
+  id_tipo_notificacao Int
+  nome                String
+  descricao           String
+  data_criacao        DateTime             @default(now())
+  data_atualizacao    DateTime             @updatedAt
+  data_inicio         DateTime             @default(now())
+  data_fim            DateTime?
+  tipo_notificacao    TipoNotificacao      @relation(fields: [id_tipo_notificacao], references: [id])
+  usuario_notificacao UsuarioNotificacao[]
+}
+
+model UsuarioNotificacao {
+  id             Int         @id @default(autoincrement())
+  id_notificacao Int
+  id_usuario     Int
+  notificacao    Notificacao @relation(fields: [id_notificacao], references: [id], onDelete: Cascade)
+  usuario        Usuario     @relation(fields: [id_usuario], references: [id], onDelete: Cascade)
+}
+
+model TipoProva {
+  id              Int              @id @default(autoincrement())
+  key             String           @unique
+  nome            String
+  descricao       String
+  historico_prova HistoricoProva[]
+}
+
+model HistoricoProva {
+  id                    Int                     @id @default(autoincrement())
+  id_usuario            Int
+  id_tipo_prova         Int
+  data_criacao          DateTime                @default(now())
+  descricao             String
+  comentarioProva       ComentarioProva[]
+  tipoProva             TipoProva               @relation(fields: [id_tipo_prova], references: [id])
+  usuario               Usuario                 @relation(fields: [id_usuario], references: [id])
+  questaoHistoricoProva QuestaoHistoricoProva[]
+}
+
+model QuestaoHistoricoProva {
+  id                 Int            @id @default(autoincrement())
+  id_usuario         Int
+  id_historico_prova Int
+  questao_key        String
+  questao_assinalada String
+  historicoProva     HistoricoProva @relation(fields: [id_historico_prova], references: [id])
+  usuario            Usuario        @relation(fields: [id_usuario], references: [id])
+}
+
+model ComentarioProva {
+  id                 Int            @id @default(autoincrement())
+  id_usuario         Int
+  id_historico_prova Int
+  questao_key        String
+  comentario         String
+  data_comentario    DateTime       @default(now())
+  historicoProva     HistoricoProva @relation(fields: [id_historico_prova], references: [id])
+  usuario            Usuario        @relation(fields: [id_usuario], references: [id])
+}
+
+model HistoricoPagamento {
+  id                      Int           @id @default(autoincrement())
+  id_usuario              Int
+  id_tipo_pagamento       Int
+  identificador_transacao String
+  valor                   Float
+  data_inicio             DateTime      @default(now())
+  data_fim                DateTime?
+  descricao               String?
+  reembolso               Boolean
+  data_comentario         DateTime      @default(now())
+  tipoPagamento           TipoPagamento @relation(fields: [id_tipo_pagamento], references: [id])
+  usuario                 Usuario       @relation(fields: [id_usuario], references: [id])
+}
+
+model TipoPagamento {
+  id                 Int                  @id @default(autoincrement())
+  key                String               @unique
+  descricao          String
+  historicoPagamento HistoricoPagamento[]
 }
