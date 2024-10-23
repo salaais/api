@@ -111,7 +111,7 @@ export class UsersService {
   }
 
   async getUserPermissons(userId: number) {
-    return this.prisma.usuario.findUnique({
+    const user = await this.prisma.usuario.findUnique({
       where: { id: userId },
       include: {
         permissaoUsuario: {
@@ -121,6 +121,27 @@ export class UsersService {
         },
       },
     });
+  
+    if (!user) {
+      throw new Error('Usuário não encontrado.');
+    }
+  
+    const currentDate = new Date();
+  
+    // Filtra permissões válidas (não expiradas)
+    const validPermissions = user.permissaoUsuario.filter(
+      (perm) => !perm.data_expiracao || new Date(perm.data_expiracao) > currentDate
+    );
+  
+    // Remove permissões expiradas diretamente no banco de dados
+    await this.prisma.permissaoUsuario.deleteMany({
+      where: {
+        id_usuario: userId,
+        data_expiracao: { lt: currentDate },
+      },
+    });
+  
+    return validPermissions.map((perm) => perm.permissao);
   }
 
   // Busca as regras e suas permissões associadas para o usuário
@@ -134,7 +155,7 @@ export class UsersService {
               include: {
                 RegraPermissao: {
                   include: {
-                    regra: true, // Inclui a regra associada
+                    regra: true,
                   },
                 },
               },
@@ -143,13 +164,31 @@ export class UsersService {
         },
       },
     });
-
-    return (
-      user?.permissaoUsuario.flatMap((perm) =>
-        perm.permissao.RegraPermissao.map((rp) => rp.regra),
-      ) || []
-    ); // Retorna uma lista de regras
-  }
+  
+    if (!user) {
+      throw new Error('Usuário não encontrado.');
+    }
+  
+    const currentDate = new Date();
+  
+    // Filtra permissões válidas (não expiradas)
+    const validPermissions = user.permissaoUsuario.filter(
+      (perm) => !perm.data_expiracao || new Date(perm.data_expiracao) > currentDate
+    );
+  
+    // Remove permissões expiradas
+    await this.prisma.permissaoUsuario.deleteMany({
+      where: {
+        id_usuario: userId,
+        data_expiracao: { lt: currentDate },
+      },
+    });
+  
+    // Retorna as regras associadas às permissões válidas
+    return validPermissions.flatMap((perm) =>
+      perm.permissao.RegraPermissao.map((rp) => rp.regra)
+    );
+  }  
 
   async getPermissoesByRegraId(regraId: number) {
     return this.prisma.regra.findUnique({

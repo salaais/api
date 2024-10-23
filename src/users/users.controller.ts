@@ -117,7 +117,7 @@ export class UsersController {
     const access_token = authorizationHeader.split(' ')[1];
     const decodedToken = await this.authService.userInfoByToken(access_token);
     return this.usersService.alterarStatusDeletado(
-      decodedToken.user_id,
+      decodedToken.id_usuario,
       body.deletado,
     );
   }
@@ -144,7 +144,7 @@ export class UsersController {
     const access_token = authorizationHeader.split(' ')[1];
     const decodedToken = await this.authService.userInfoByToken(access_token);
     return this.usersService.alterarStatusDesativado(
-      decodedToken.user_id,
+      decodedToken.id_usuario,
       body.desativado,
     );
   }

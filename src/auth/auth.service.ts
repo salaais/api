@@ -10,13 +10,18 @@ import { AuthEntity } from './entity/auth.entity';
 import * as bcrypt from 'bcrypt';
 import { Permissao, UserInfoByToken } from './entity/user.entity';
 import { Prisma } from '@prisma/client';
+import { OAuth2Client } from 'google-auth-library';
 
 @Injectable()
 export class AuthService {
+  private client: OAuth2Client
+
   constructor(
     private prisma: PrismaService,
     private jwtService: JwtService,
-  ) {}
+  ) {
+    this.client = new OAuth2Client(process.env.GOOGLE_CLIENT_ID);
+  }
 
   async login(email: string, password: string): Promise<AuthEntity> {
     // Step 1: Fetch a user with the given email
@@ -39,21 +44,21 @@ export class AuthService {
 
     // Step 3: Generate a JWT containing the user's ID and return it
     return {
-      access_token: this.jwtService.sign({ user_id: user.id }),
+      access_token: this.jwtService.sign({ id_usuario: user.id }),
     };
   }
 
   async userInfoByToken(access_token: string): Promise<UserInfoByToken> {
     // Decodifica o token JWT
     const decodedToken = this.jwtService.decode(access_token) as any;
-
+  
     if (!decodedToken) {
       throw new UnauthorizedException('Invalid token');
     }
-
+  
     const usuario = await this.prisma.usuario.findUnique({
       where: {
-        id: decodedToken.user_id, // Supondo que o token contenha `user_id`
+        id: decodedToken.id_usuario, // Supondo que o token contenha `id_usuario`
       },
       include: {
         tipo_login: true, // Inclui o relacionamento `tipo_login`
@@ -72,13 +77,29 @@ export class AuthService {
         },
       },
     });
-
+  
     if (!usuario) {
       throw new UnauthorizedException('Usuário não encontrado');
     }
-
+  
+    const currentDate = new Date();
+  
+    // Filtra permissões válidas (não expiradas) e coleta os IDs das permissões expiradas
+    const validPermissions = usuario.permissaoUsuario.filter((p) => {
+      const isValid = !p.data_expiracao || new Date(p.data_expiracao) > currentDate;
+      return isValid;
+    });
+  
+    // Remove permissões expiradas diretamente no banco de dados
+    await this.prisma.permissaoUsuario.deleteMany({
+      where: {
+        id_usuario: usuario.id,
+        data_expiracao: { lt: currentDate },
+      },
+    });
+  
     // Prepara as permissões e regras para a resposta
-    const permissoes: Permissao[] = usuario.permissaoUsuario.map((p) => ({
+    const permissoes: Permissao[] = validPermissions.map((p) => ({
       id_key: p.permissao.id,
       key: p.permissao.key,
       descricao: p.permissao.descricao,
@@ -88,16 +109,15 @@ export class AuthService {
         id_key: r.regra.id,
         key: r.regra.key,
         descricao: r.regra.descricao,
-        data_resetar_contagem_uso:
-          r.data_resetar_contagem_uso?.toISOString() || null, // Converte Date para string
+        data_resetar_contagem_uso: r.data_resetar_contagem_uso?.toISOString() || null, // Converte Date para string
         limite_contagem_uso: r.limite_contagem_uso || null,
         contagem_uso: r.contagem_uso || null,
       })),
     }));
-
+  
     // Retorna as informações do usuário junto com `iat`, `exp` e permissões
     return {
-      user_id: Number(usuario.id),
+      id_usuario: Number(usuario.id),
       iat: decodedToken.iat,
       exp: decodedToken.exp,
       email: usuario.email,
@@ -109,7 +129,7 @@ export class AuthService {
       data_criacao_usuario: usuario.data_criacao || null,
       permissoes, // Adiciona a lista de permissões
     };
-  }
+  }  
 
   async validateUser(token: string): Promise<any> {
     const decoded = this.jwtService.verify(token);
@@ -132,5 +152,30 @@ export class AuthService {
     };
 
     return userWithPermissions; // Agora `permissions` é um array de chaves
+  }
+
+  async validateGoogleToken(token: string): Promise<any> {
+    const ticket = await this.client.verifyIdToken({
+      idToken: token,
+      audience: process.env.GOOGLE_CLIENT_ID,
+    });
+    const payload = ticket.getPayload();
+    return payload;
+  }
+
+  async gerarTokenPeloTokenGoogle(accessToken: string) {
+
+    // const { email } = await this.validateGoogleToken(accessToken);
+    // const usuario = await this.prisma.usuario.findUnique({
+    //   where: { email },
+    // });
+
+    // if (!usuario) {
+    //   throw new UnauthorizedException('Usuário não encontrado');
+    // }
+
+    const jwtToken = this.jwtService.sign({ id_usuario: 3 });
+
+    return { access_token: jwtToken };
   }
 }

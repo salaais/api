@@ -9,6 +9,7 @@ import {
 } from '@nestjs/common';
 import { PermissionService } from './permission.service';
 import {
+  DesvincularPermissaoUsuarioDto,
   PermissaoDto,
   RegraDto,
   VincularPermissaoUsuarioDto,
@@ -55,6 +56,15 @@ export class PermissionController {
   ) {
     return this.permissionService.vincularPermissaoUsuario(
       vincularPermissaoUsuario,
+    );
+  }
+
+  @Post('permissao/desvincular-permissao-usuario')
+  async desvincularPermissaoUsuario(
+    @Body() desvincularPermissaoUsuario: DesvincularPermissaoUsuarioDto,
+  ) {
+    return this.permissionService.desvincularPermissaoUsuario(
+      desvincularPermissaoUsuario,
     );
   }
 

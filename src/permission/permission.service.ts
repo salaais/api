@@ -32,7 +32,7 @@ export class PermissionService {
         },
       },
     });
-  
+
     // Mapear para ajustar o formato do retorno conforme o desejado
     return permissoes.map((permissao) => ({
       ...permissao,
@@ -45,7 +45,7 @@ export class PermissionService {
         key: regraPermissao.regra.key, // Mover `key` da regra diretamente para `RegraPermissao`
       })),
     }));
-  }  
+  }
 
   async vincularRegraPermissao(
     vincularRegraPermissaoDto: VincularRegraPermissaoDto,
@@ -166,62 +166,143 @@ export class PermissionService {
     });
   }
 
-  async vincularPermissaoUsuario(vincularPermissaoUsuarioDto: VincularPermissaoUsuarioDto) {
-    const { id_usuario, username, email, key_permissao, data_expiracao } = vincularPermissaoUsuarioDto;
-  
+  async vincularPermissaoUsuario(
+    vincularPermissaoUsuarioDto: VincularPermissaoUsuarioDto,
+  ) {
+    const { id_usuario, username, email, key_permissao, data_expiracao } =
+      vincularPermissaoUsuarioDto;
+
     // Verificar se pelo menos um dos campos (id, username, email) foi fornecido
     if (!id_usuario && !username && !email) {
-      throw new BadRequestException('Pelo menos um dos campos "id_usuario", "username" ou "email" deve ser fornecido.');
+      throw new BadRequestException(
+        'Pelo menos um dos campos "id_usuario", "username" ou "email" deve ser fornecido.',
+      );
     }
-  
+
     // Buscar o usuário por ID, username ou email
     const usuario = await this.prisma.usuario.findFirst({
       where: {
         OR: [
-          id_usuario ? { id: id_usuario } : undefined,     // Busca pelo ID se fornecido
-          username ? { username } : undefined,             // Busca pelo username se fornecido
-          email ? { email } : undefined                     // Busca pelo email se fornecido
-        ].filter(Boolean),                                  // Remove valores undefined
+          id_usuario ? { id: id_usuario } : undefined, // Busca pelo ID se fornecido
+          username ? { username } : undefined, // Busca pelo username se fornecido
+          email ? { email } : undefined, // Busca pelo email se fornecido
+        ].filter(Boolean), // Remove valores undefined
       },
     });
-  
+
     if (!usuario) {
-      throw new NotFoundException(`Usuário com identificador fornecido não encontrado.`);
+      throw new NotFoundException(
+        `Usuário com identificador fornecido não encontrado.`,
+      );
     }
-  
+
     // Buscar o ID da permissão a partir da key
     const permissao = await this.prisma.permissao.findUnique({
       where: { key: key_permissao },
     });
-  
+
     if (!permissao) {
-      throw new NotFoundException(`Permissão com key '${key_permissao}' não encontrada`);
+      throw new NotFoundException(
+        `Permissão com key '${key_permissao}' não encontrada`,
+      );
     }
-  
+
     // Verificar se já existe uma relação entre o usuário e a permissão
-    const permissaoUsuarioExistente = await this.prisma.permissaoUsuario.findUnique({
+    const permissaoUsuarioExistente =
+      await this.prisma.permissaoUsuario.findUnique({
+        where: {
+          id_usuario_id_permissao: {
+            id_usuario: usuario.id, // Aqui você pode usar usuario.id
+            id_permissao: permissao.id,
+          },
+        },
+      });
+
+    if (permissaoUsuarioExistente) {
+      throw new ConflictException(
+        'A permissão já está vinculada a este usuário.',
+      );
+    }
+
+    // Criar a relação na tabela PermissaoUsuario
+    return this.prisma.permissaoUsuario.create({
+      data: {
+        id_usuario: usuario.id, // Aqui você também pode usar usuario.id
+        id_permissao: permissao.id,
+        data_expiracao: data_expiracao ?? null, // Usar a data atual ou a fornecida
+      },
+    });
+  }
+
+  async desvincularPermissaoUsuario(
+    vincularPermissaoUsuarioDto: VincularPermissaoUsuarioDto,
+  ) {
+    const { id_usuario, username, email, key_permissao } =
+      vincularPermissaoUsuarioDto;
+
+    // Verificar se pelo menos um dos campos (id, username, email) foi fornecido
+    if (!id_usuario && !username && !email) {
+      throw new BadRequestException(
+        'Pelo menos um dos campos "id_usuario", "username" ou "email" deve ser fornecido.',
+      );
+    }
+
+    // Buscar o usuário por ID, username ou email
+    const usuario = await this.prisma.usuario.findFirst({
+      where: {
+        OR: [
+          id_usuario ? { id: id_usuario } : undefined,
+          username ? { username } : undefined,
+          email ? { email } : undefined,
+        ].filter(Boolean),
+      },
+    });
+
+    if (!usuario) {
+      throw new NotFoundException(
+        `Usuário com identificador fornecido não encontrado.`,
+      );
+    }
+
+    // Buscar o ID da permissão a partir da key
+    const permissao = await this.prisma.permissao.findUnique({
+      where: { key: key_permissao },
+    });
+
+    if (!permissao) {
+      throw new NotFoundException(
+        `Permissão com key '${key_permissao}' não encontrada`,
+      );
+    }
+
+    // Verificar se a permissão está vinculada ao usuário
+    const permissaoUsuarioExistente =
+      await this.prisma.permissaoUsuario.findUnique({
+        where: {
+          id_usuario_id_permissao: {
+            id_usuario: usuario.id,
+            id_permissao: permissao.id,
+          },
+        },
+      });
+
+    if (!permissaoUsuarioExistente) {
+      throw new NotFoundException(
+        'A permissão não está vinculada a este usuário.',
+      );
+    }
+
+    // Remover a relação da tabela PermissaoUsuario
+    return this.prisma.permissaoUsuario.delete({
       where: {
         id_usuario_id_permissao: {
-          id_usuario: usuario.id,    // Aqui você pode usar usuario.id
+          id_usuario: usuario.id,
           id_permissao: permissao.id,
         },
       },
     });
-  
-    if (permissaoUsuarioExistente) {
-      throw new ConflictException('A permissão já está vinculada a este usuário.');
-    }
-  
-    // Criar a relação na tabela PermissaoUsuario
-    return this.prisma.permissaoUsuario.create({
-      data: {
-        id_usuario: usuario.id,     // Aqui você também pode usar usuario.id
-        id_permissao: permissao.id,
-        data_expiracao: data_expiracao ?? null,  // Usar a data atual ou a fornecida
-      },
-    });
   }
-  
+
   async findAllRules() {
     return await this.prisma.regra.findMany({
       include: {

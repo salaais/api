@@ -1,4 +1,12 @@
-import { Body, Controller, Get, Post, Req, UseGuards } from '@nestjs/common';
+import {
+  Body,
+  Controller,
+  Get,
+  Post,
+  Req,
+  UnauthorizedException,
+  UseGuards,
+} from '@nestjs/common';
 import { AuthService } from './auth.service';
 import { ApiBearerAuth, ApiOkResponse, ApiTags } from '@nestjs/swagger';
 import { AuthEntity } from './entity/auth.entity';
@@ -22,6 +30,27 @@ export class AuthController {
   @UseGuards(JwtAuthGuard)
   // @ApiOkResponse({ type: AuthEntity })
   userInfoByToken2(@Req() req) {
+    const access_token = req.headers.authorization.split(' ')[1];
+    return this.authService.userInfoByToken(access_token);
+  }
+
+  @Get('gerar-token-pelo-token-google')
+  @ApiBearerAuth()
+  @UseGuards(JwtAuthGuard)
+  gerarTokenPeloTokenGoogle(@Req() req) {
+    const authHeader = req.headers.authorization;
+    if (!authHeader) {
+      throw new UnauthorizedException(`Authorization não foi fornecido authHeader: ${authHeader}`);
+    }
+    const access_token = req.headers.authorization.split(' ')[1];
+    return this.authService.gerarTokenPeloTokenGoogle(access_token);
+  }
+
+  @Get('cadastrar-usuario-pelo-token')
+  @ApiBearerAuth()
+  @UseGuards(JwtAuthGuard)
+  // @ApiOkResponse({ type: AuthEntity })
+  cadastrarUsuarioPeloToken(@Req() req) {
     const access_token = req.headers.authorization.split(' ')[1];
     return this.authService.userInfoByToken(access_token);
   }

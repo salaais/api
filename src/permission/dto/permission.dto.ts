@@ -67,7 +67,23 @@ export class VincularPermissaoUsuarioDto {
   // @ApiProperty({ example: 'filipe@example.com' })
   email?: string;
 
-  @ApiProperty({ example: `${Permissions.COMUM}`, })
+  @ApiProperty({ example: `${Permissions.COMUM}` })
   key_permissao: string;
+
+  @ApiProperty({ example: `${new Date().toISOString()}` })
   data_expiracao?: Date;
+}
+
+export class DesvincularPermissaoUsuarioDto {
+  @ApiProperty({ example: 4 })
+  id_usuario?: number;
+
+  // @ApiProperty({ example: 'filipe' })
+  username?: string;
+
+  // @ApiProperty({ example: 'filipe@example.com' })
+  email?: string;
+
+  @ApiProperty({ example: `${Permissions.COMUM}` })
+  key_permissao: string;
 }

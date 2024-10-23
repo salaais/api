@@ -19,7 +19,7 @@ export interface Permissao {
 }
 
 export interface UserInfoByToken {
-  user_id: number;
+  id_usuario: number;
   iat: number;
   exp: number;
   email: string;

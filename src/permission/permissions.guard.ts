@@ -22,65 +22,56 @@ export class PermissionsGuard implements CanActivate {
       PERMISSIONS_KEY,
       context.getHandler(),
     );
-
+  
     if (!requiredPermissions) {
       console.log('Nenhuma permissão requerida, acesso liberado.');
       return true;
     }
-
+  
     const request = context.switchToHttp().getRequest();
     const authHeader = request.headers.authorization;
-
+  
     if (!authHeader) {
       throw new ForbiddenException('Token não encontrado');
     }
-
+  
     const token = authHeader.split(' ')[1];
     const decodedToken = this.jwtService.decode(token) as any;
-
-    const userId = decodedToken.user_id;
-
+    const userId = decodedToken.id_usuario;
+  
     if (!userId) {
       throw new ForbiddenException('Usuário não autenticado.');
     }
-
-    // Obtém permissões diretas do usuário
-    const user = await this.usersService.getUserPermissons(userId);
-
-    if (!user) {
-      throw new ForbiddenException('Usuário não encontrado.');
+  
+    // Obtém permissões diretas válidas do usuário (não expiradas)
+    const validPermissions = await this.usersService.getUserPermissons(userId);
+  
+    if (!validPermissions.length) {
+      throw new ForbiddenException('Usuário não possui permissões válidas.');
     }
-
-    // Mapeia permissões diretas
-    const userPermissions = user.permissaoUsuario.map(
-      (perm) => perm.permissao.key,
-    );
-
-    console.log('Permissões do usuário:', userPermissions);
-
+  
+    const userPermissions = validPermissions.map((perm) => perm.key);
+    console.log('Permissões válidas do usuário:', userPermissions);
+  
     // Busca regras associadas às permissões do usuário
     const regras = await this.usersService.getRegrasByUserId(userId);
-    const regraKeys = regras.map((regra) => regra.key); // Mapeia as chaves das regras
-
+    const regraKeys = regras.map((regra) => regra.key);
     console.log('Regras do usuário:', regraKeys);
-
-    // Combina permissões diretas com as permissões associadas às regras
+  
     const allPermissions = [...userPermissions, ...regraKeys];
     console.log('Permissões requeridas:', requiredPermissions);
-
-    // Verifica se o usuário possui alguma das permissões necessárias
+  
     const hasPermission = requiredPermissions.some((permission) =>
       allPermissions.includes(permission),
     );
-
+  
     if (!hasPermission) {
-      console.log('Permissão negada.');
       throw new ForbiddenException(
         'Você não tem permissão para acessar este recurso.',
       );
     }
-
+  
     console.log('Permissão concedida.');
     return true;
-  }
+  }  
 }
