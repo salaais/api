@@ -11,6 +11,8 @@ import { User } from './interfaces/user.interface';
 import { UpdateUserDto } from './dto/update-user.dto';
 import { Usuario } from '@prisma/client';
 import { JwtService } from '@nestjs/jwt';
+import { PermissionService } from 'src/permission/permission.service';
+import { Permissions } from 'src/permission/enum/permission.enum';
 
 export const roundsOfHashing = 10;
 
@@ -18,6 +20,7 @@ export const roundsOfHashing = 10;
 export class UsersService {
   constructor(
     private prisma: PrismaService,
+    private PermissionService: PermissionService,
   ) {}
 
   async create(createUserDto: CreateUserDto): Promise<any> {
@@ -67,7 +70,9 @@ export class UsersService {
     const data = {
       ...rest,
       senha: hashedPassword,
-      id_tipo_login: tipoLogin.id, // Salvar a referência do id do tipo de login
+      id_tipo_login: tipoLogin.id,
+      bio: createUserDto.bio || 'Olá, estou usando SalaAis!',
+      data_atualizacao: null,
     };
 
     const createdUser = await this.prisma.usuario.create({
@@ -76,6 +81,12 @@ export class UsersService {
 
     // Criar uma cópia do objeto excluindo o campo senha
     const { senha, ...userWithoutPassword } = createdUser;
+
+    await this.PermissionService.vincularPermissaoUsuario({
+      id_usuario: createdUser.id,
+      key_permissao: Permissions.COMUM,
+      data_expiracao: null,
+    });
 
     return userWithoutPassword;
   }
@@ -99,16 +110,55 @@ export class UsersService {
     return this.prisma.usuario.findUnique({ where: { id } });
   }
 
-  async getUserPermissons(id: number) {
-    if (!id) {
-      throw new Error('ID de usuário inválido ou indefinido.');
-    }
-  
+  async getUserPermissons(userId: number) {
     return this.prisma.usuario.findUnique({
-      where: { id },
+      where: { id: userId },
       include: {
         permissaoUsuario: {
-          include: { permissao: true },
+          include: {
+            permissao: true,
+          },
+        },
+      },
+    });
+  }
+
+  // Busca as regras e suas permissões associadas para o usuário
+  async getRegrasByUserId(userId: number) {
+    const user = await this.prisma.usuario.findUnique({
+      where: { id: userId },
+      include: {
+        permissaoUsuario: {
+          include: {
+            permissao: {
+              include: {
+                RegraPermissao: {
+                  include: {
+                    regra: true, // Inclui a regra associada
+                  },
+                },
+              },
+            },
+          },
+        },
+      },
+    });
+
+    return (
+      user?.permissaoUsuario.flatMap((perm) =>
+        perm.permissao.RegraPermissao.map((rp) => rp.regra),
+      ) || []
+    ); // Retorna uma lista de regras
+  }
+
+  async getPermissoesByRegraId(regraId: number) {
+    return this.prisma.regra.findUnique({
+      where: { id: regraId },
+      include: {
+        RegraPermissao: {
+          include: {
+            permissao: true, // Inclui as permissões associadas
+          },
         },
       },
     });
@@ -194,5 +244,58 @@ export class UsersService {
       return null; // Incorrect password
     }
     return user; // Return authenticated user
+  }
+
+  async alterarStatusDesativado(
+    userId: number,
+    desativado: boolean,
+  ): Promise<any> {
+    // Buscar o usuário no banco de dados
+    const usuario = await this.prisma.usuario.findUnique({
+      where: { id: userId },
+    });
+
+    if (!usuario) {
+      throw new HttpException('Usuário não encontrado', HttpStatus.NOT_FOUND);
+    }
+
+    // Atualizar o status de 'desativado' do usuário
+    const usuarioAtualizado = await this.prisma.usuario.update({
+      where: { id: userId },
+      data: {
+        desativado: desativado, // Definir com base no valor passado no request
+        data_atualizacao: new Date(), // Atualiza a data de atualização
+      },
+    });
+
+    return {
+      message: 'Status de desativação alterado com sucesso.',
+      desativado: usuarioAtualizado.desativado,
+    };
+  }
+
+  async alterarStatusDeletado(userId: number, deletado: boolean): Promise<any> {
+    // Buscar o usuário no banco de dados
+    const usuario = await this.prisma.usuario.findUnique({
+      where: { id: userId },
+    });
+
+    if (!usuario) {
+      throw new HttpException('Usuário não encontrado', HttpStatus.NOT_FOUND);
+    }
+
+    // Atualizar o status de 'desativado' do usuário
+    const usuarioAtualizado = await this.prisma.usuario.update({
+      where: { id: userId },
+      data: {
+        deletado: deletado, // Definir com base no valor passado no request
+        data_atualizacao: new Date(), // Atualiza a data de atualização
+      },
+    });
+
+    return {
+      message: 'Status de deleção alterado com sucesso.',
+      deletado: usuarioAtualizado.deletado,
+    };
   }
 }

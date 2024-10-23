@@ -11,11 +11,12 @@ export enum UserPermissions {
 
   //COMUMN
   PEGAR_USUARIO_POR_ID = 'pegar_usuario_por_id',
-  CRIAR_USUARIO = 'criar_usuario',
+  // CRIAR_USUARIO = 'criar_usuario',
   DELETAR_MEU_USUARIO = 'deletar_meu_usuario',
   EDITAR_MEU_USUARIO = 'editar_meu_usuario',
   CORRECAO_COMUM_PROVA = 'correcao_comum_prova',
   LISTAR_DADOS_PUBLICOS_USUARIOS = 'listar_dados_publicos_usuarios',
+  ALTERAR_STATUS_MEU_USUARIO = 'alterar_status_meu_usuario',
   
   // plano (OURO, PRATA, BRONZE)
   CORRECAO_PLANO_PROVA = 'correcao_plano_prova',
@@ -33,6 +34,9 @@ export enum UserPermissions {
   EDITAR_PERMISSAO = 'editar_permissao',
   EDITAR_REGRA = 'editar_regra',
   VINCULAR_REGRA_COM_PERMISSAO = 'vincular_regra_com_permissao',
+  VINCULAR_PERMISSAO_COM_USUARIO = 'vincular_permissao_com_usuario',
   CADASTRAR_QUESTOES_PROVA = 'cadastrar_questoes_prova',
   LISTAR_QUESTOES = 'listar_questoes',
+  ALTERAR_STATUS_USUARIO = 'alterar_status_usuario'
+
 }

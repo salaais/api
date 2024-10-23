@@ -1,4 +1,3 @@
-// src/permissions/permissions.guard.ts
 import {
   Injectable,
   CanActivate,
@@ -7,15 +6,15 @@ import {
 } from '@nestjs/common';
 import { Reflector } from '@nestjs/core';
 import { PERMISSIONS_KEY } from './permissions.decorator';
-import { UsersService } from '../users/users.service'; // Importe o serviço de usuários
-import { JwtService } from '@nestjs/jwt'; // Para decodificar o JWT
+import { UsersService } from '../users/users.service';
+import { JwtService } from '@nestjs/jwt';
 
 @Injectable()
 export class PermissionsGuard implements CanActivate {
   constructor(
     private reflector: Reflector,
     private readonly usersService: UsersService,
-    private jwtService: JwtService,
+    private readonly jwtService: JwtService,
   ) {}
 
   async canActivate(context: ExecutionContext): Promise<boolean> {
@@ -39,21 +38,39 @@ export class PermissionsGuard implements CanActivate {
     const token = authHeader.split(' ')[1];
     const decodedToken = this.jwtService.decode(token) as any;
 
-    const user = await this.usersService.getUserPermissons(decodedToken.user_id);
+    const userId = decodedToken.user_id;
+
+    if (!userId) {
+      throw new ForbiddenException('Usuário não autenticado.');
+    }
+
+    // Obtém permissões diretas do usuário
+    const user = await this.usersService.getUserPermissons(userId);
 
     if (!user) {
       throw new ForbiddenException('Usuário não encontrado.');
     }
 
+    // Mapeia permissões diretas
     const userPermissions = user.permissaoUsuario.map(
       (perm) => perm.permissao.key,
     );
 
-    console.log('User Permissions:', userPermissions);
-    console.log('Required Permissions:', requiredPermissions);
+    console.log('Permissões do usuário:', userPermissions);
 
+    // Busca regras associadas às permissões do usuário
+    const regras = await this.usersService.getRegrasByUserId(userId);
+    const regraKeys = regras.map((regra) => regra.key); // Mapeia as chaves das regras
+
+    console.log('Regras do usuário:', regraKeys);
+
+    // Combina permissões diretas com as permissões associadas às regras
+    const allPermissions = [...userPermissions, ...regraKeys];
+    console.log('Permissões requeridas:', requiredPermissions);
+
+    // Verifica se o usuário possui alguma das permissões necessárias
     const hasPermission = requiredPermissions.some((permission) =>
-      userPermissions.includes(permission),
+      allPermissions.includes(permission),
     );
 
     if (!hasPermission) {

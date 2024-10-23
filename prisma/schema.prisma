@@ -19,6 +19,8 @@ model Usuario {
   data_atualizacao      DateTime?               @updatedAt
   data_criacao          DateTime                @default(now())
   bio                   String?
+  deletado              Boolean                 @default(false)
+  desativado            Boolean                 @default(false)
   comentarioProva       ComentarioProva[]
   historicoPagamento    HistoricoPagamento[]
   historico_prova       HistoricoProva[]
@@ -40,9 +42,11 @@ model PermissaoUsuario {
   id_usuario     Int
   id_permissao   Int
   data_criacao   DateTime  @default(now())
-  data_expiracao DateTime  @default(now())
+  data_expiracao DateTime?
   permissao      Permissao @relation(fields: [id_permissao], references: [id])
   usuario        Usuario   @relation(fields: [id_usuario], references: [id])
+
+  @@unique([id_usuario, id_permissao])
 }
 
 model RegraPermissao {

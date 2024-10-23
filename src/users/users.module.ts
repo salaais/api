@@ -7,6 +7,7 @@ import { PrismaModule } from '../prisma/prisma.module';
 import { JwtModule } from '@nestjs/jwt';
 import { PrismaClientExceptionFilter } from '../common/filters/prisma-exception.filter';
 import { AuthModule } from '../auth/auth.module'; // Importa o AuthModule
+import { PermissionModule } from 'src/permission/permission.module';
 
 @Module({
   controllers: [UsersController],
@@ -25,6 +26,7 @@ import { AuthModule } from '../auth/auth.module'; // Importa o AuthModule
       signOptions: { expiresIn: '60s' },
     }),
     forwardRef(() => AuthModule), // Adicione forwardRef aqui
+    PermissionModule
   ],
   exports: [UsersService],
 })

@@ -3,10 +3,12 @@ import { Usuario as PrismaUser } from '@prisma/client';
 import { Exclude } from 'class-transformer';
 import { IsInt } from 'class-validator';
 
-export class UserEntity implements PrismaUser {
-  constructor(partial: Partial<UserEntity>) {
-    Object.assign(this, partial);
-  }
+// export class UserEntity implements PrismaUser {
+//   constructor(partial: Partial<UserEntity>) {
+//     Object.assign(this, partial);
+//   }
+
+export class UserEntity {
 
   @ApiProperty()
   id: number;

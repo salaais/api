@@ -11,6 +11,7 @@ import { PermissionService } from './permission.service';
 import {
   PermissaoDto,
   RegraDto,
+  VincularPermissaoUsuarioDto,
   VincularRegraPermissaoDto,
 } from './dto/permission.dto';
 import { ApiTags } from '@nestjs/swagger';
@@ -36,6 +37,24 @@ export class PermissionController {
   ) {
     return this.permissionService.vincularRegraPermissao(
       vincularRegraPermissaoDto,
+    );
+  }
+
+  @Post('permissao/desvincular-regra-permissao')
+  async desvincularRegraPermissao(
+    @Body() vincularRegraPermissaoDto: VincularRegraPermissaoDto,
+  ) {
+    return this.permissionService.desvincularRegraPermissao(
+      vincularRegraPermissaoDto,
+    );
+  }
+
+  @Post('permissao/vincular-permissao-usuario')
+  async vincularPermissaoUsuario(
+    @Body() vincularPermissaoUsuario: VincularPermissaoUsuarioDto,
+  ) {
+    return this.permissionService.vincularPermissaoUsuario(
+      vincularPermissaoUsuario,
     );
   }
 

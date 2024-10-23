@@ -42,6 +42,12 @@ export class CreateUserDto {
   password: string;
 
   @ApiProperty({
+    example: 'Olá, estou usando SalaAis!',
+  })
+  @IsString()
+  bio: string;
+
+  @ApiProperty({
     example: 'sala_ais',
     description: 'O ID do tipo de login do usuário',
   })

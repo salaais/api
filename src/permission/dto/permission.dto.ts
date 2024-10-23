@@ -1,8 +1,9 @@
-import { ApiProperty } from '@nestjs/swagger';
+import { ApiProperty, ApiExtraModels } from '@nestjs/swagger';
+import { Permissions } from '../enum/permission.enum';
 
 export class PermissaoDto {
   @ApiProperty({
-    example: 'COMUM',
+    example: `${Permissions.COMUM}`,
   })
   readonly key: string;
 
@@ -26,16 +27,16 @@ export class RegraDto {
 
 export class VincularRegraPermissaoDto {
   @ApiProperty({
+    description: 'Chave da permissão a ser vinculada',
+    example: `${Permissions.COMUM}`,
+  })
+  readonly key_permissao: string; // id da permissão será obtido a partir do key
+
+  @ApiProperty({
     description: 'Chave da regra a ser vinculada',
     example: 'pegar_usuario_por_id',
   })
   readonly key_regra: string; // id da regra será obtido a partir do key
-
-  @ApiProperty({
-    description: 'Chave da permissão a ser vinculada',
-    example: 'COMUM',
-  })
-  readonly key_permissao: string; // id da permissão será obtido a partir do key
 
   @ApiProperty({
     description: 'Data para resetar a contagem de uso',
@@ -54,4 +55,19 @@ export class VincularRegraPermissaoDto {
     example: 5,
   })
   readonly contagem_uso: number;
+}
+
+export class VincularPermissaoUsuarioDto {
+  @ApiProperty({ example: 4 })
+  id_usuario?: number;
+
+  // @ApiProperty({ example: 'filipe' })
+  username?: string;
+
+  // @ApiProperty({ example: 'filipe@example.com' })
+  email?: string;
+
+  @ApiProperty({ example: `${Permissions.COMUM}`, })
+  key_permissao: string;
+  data_expiracao?: Date;
 }

@@ -17,7 +17,7 @@ export class AuthController {
     return this.authService.login(email, password);
   }
 
-  @Get('token')
+  @Get('dados-usuario-por-token')
   @ApiBearerAuth()
   @UseGuards(JwtAuthGuard)
   // @ApiOkResponse({ type: AuthEntity })
