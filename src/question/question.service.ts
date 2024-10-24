@@ -10,7 +10,7 @@ import { CreateQuestionsTsvDto } from './dto/create-questions-tsv';
 import * as fastcsv from 'fast-csv';
 import { Readable } from 'stream';
 import { AllQuestionsDto } from './dto/all-questions';
-import { normalizeString } from '../utils';
+import { normalizeString } from '../utils/utils';
 import { GenerateTestDto } from './dto/generate-test';
 import { TestGradeDto } from './dto/test-grade';
 import { GenerateTestRandomDto } from './dto/generate-test-random';

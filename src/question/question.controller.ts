@@ -1,11 +1,9 @@
 import { Body, Controller, Post, UseGuards } from '@nestjs/common';
 import {
-  ApiBearerAuth,
   ApiOperation,
   ApiResponse,
   ApiTags,
 } from '@nestjs/swagger';
-import { JwtAuthGuard } from 'src/auth/jwt-auth.guard';
 import { QuestionService } from './question.service';
 import { CreateQuestionsTsvDto } from './dto/create-questions-tsv';
 import { AllQuestionsDto } from './dto/all-questions';
@@ -13,6 +11,8 @@ import { GenerateTestDto } from './dto/generate-test';
 import { TestGradeDto } from './dto/test-grade';
 import { GenerateTestRandomDto } from './dto/generate-test-random';
 import { QuestionBySubject } from './dto/questao-por-materia';
+import { AuthPermissionsGuard } from 'src/auth/auth.decorator';
+import { UserPermissions } from 'src/utils/permission.enum';
 
 //test
 @ApiTags('Questão')
@@ -23,6 +23,7 @@ export class QuestionController {
   @Post('/cadastro/tsv')
   //   @ApiBearerAuth()
   //   @UseGuards(JwtAuthGuard)
+  @AuthPermissionsGuard(UserPermissions.CADASTRAR_QUESTOES_PROVA)
   @ApiOperation({ summary: 'Cadastrar questões saparadas por espaços' })
   @ApiResponse({ status: 201, description: 'created' })
   async createQuestionsTsv(@Body() request: CreateQuestionsTsvDto) {

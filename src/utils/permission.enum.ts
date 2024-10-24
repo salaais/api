@@ -10,7 +10,7 @@ export enum Permissions {
 export enum UserPermissions {
 
   //COMUMN
-  PEGAR_USUARIO_POR_ID = 'pegar_usuario_por_id',
+  LISTAR_USUARIO_POR_ID = 'listar_usuario_por_id',
   // CRIAR_USUARIO = 'criar_usuario',
   DELETAR_MEU_USUARIO = 'deletar_meu_usuario',
   EDITAR_MEU_USUARIO = 'editar_meu_usuario',

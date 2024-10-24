@@ -10,6 +10,15 @@ import { AuthModule } from '../auth/auth.module'; // Importa o AuthModule
 import { PermissionModule } from 'src/permission/permission.module';
 
 @Module({
+  imports: [
+    PrismaModule,
+    JwtModule.register({
+      secret: process.env.JWT_SECRET,
+      signOptions: { expiresIn: '60s' },
+    }),
+    forwardRef(() => AuthModule),
+    PermissionModule
+  ],
   controllers: [UsersController],
   providers: [
     UsersService,
@@ -18,15 +27,6 @@ import { PermissionModule } from 'src/permission/permission.module';
       provide: APP_FILTER,
       useClass: PrismaClientExceptionFilter,
     },
-  ],
-  imports: [
-    PrismaModule,
-    JwtModule.register({
-      secret: process.env.JWT_SECRET,
-      signOptions: { expiresIn: '60s' },
-    }),
-    forwardRef(() => AuthModule), // Adicione forwardRef aqui
-    PermissionModule
   ],
   exports: [UsersService],
 })

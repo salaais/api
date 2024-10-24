@@ -14,13 +14,13 @@ import { OAuth2Client } from 'google-auth-library';
 
 @Injectable()
 export class AuthService {
-  private client: OAuth2Client
+  private client: OAuth2Client;
 
   constructor(
     private prisma: PrismaService,
     private jwtService: JwtService,
   ) {
-    this.client = new OAuth2Client(process.env.GOOGLE_CLIENT_ID);
+    this.client = new OAuth2Client(process.env.ANDROID_CLIENT_ID);
   }
 
   async login(email: string, password: string): Promise<AuthEntity> {
@@ -51,11 +51,11 @@ export class AuthService {
   async userInfoByToken(access_token: string): Promise<UserInfoByToken> {
     // Decodifica o token JWT
     const decodedToken = this.jwtService.decode(access_token) as any;
-  
+
     if (!decodedToken) {
       throw new UnauthorizedException('Invalid token');
     }
-  
+
     const usuario = await this.prisma.usuario.findUnique({
       where: {
         id: decodedToken.id_usuario, // Supondo que o token contenha `id_usuario`
@@ -77,19 +77,20 @@ export class AuthService {
         },
       },
     });
-  
+
     if (!usuario) {
       throw new UnauthorizedException('Usuário não encontrado');
     }
-  
+
     const currentDate = new Date();
-  
+
     // Filtra permissões válidas (não expiradas) e coleta os IDs das permissões expiradas
     const validPermissions = usuario.permissaoUsuario.filter((p) => {
-      const isValid = !p.data_expiracao || new Date(p.data_expiracao) > currentDate;
+      const isValid =
+        !p.data_expiracao || new Date(p.data_expiracao) > currentDate;
       return isValid;
     });
-  
+
     // Remove permissões expiradas diretamente no banco de dados
     await this.prisma.permissaoUsuario.deleteMany({
       where: {
@@ -97,7 +98,7 @@ export class AuthService {
         data_expiracao: { lt: currentDate },
       },
     });
-  
+
     // Prepara as permissões e regras para a resposta
     const permissoes: Permissao[] = validPermissions.map((p) => ({
       id_key: p.permissao.id,
@@ -109,12 +110,13 @@ export class AuthService {
         id_key: r.regra.id,
         key: r.regra.key,
         descricao: r.regra.descricao,
-        data_resetar_contagem_uso: r.data_resetar_contagem_uso?.toISOString() || null, // Converte Date para string
+        data_resetar_contagem_uso:
+          r.data_resetar_contagem_uso?.toISOString() || null, // Converte Date para string
         limite_contagem_uso: r.limite_contagem_uso || null,
         contagem_uso: r.contagem_uso || null,
       })),
     }));
-  
+
     // Retorna as informações do usuário junto com `iat`, `exp` e permissões
     return {
       id_usuario: Number(usuario.id),
@@ -129,7 +131,7 @@ export class AuthService {
       data_criacao_usuario: usuario.data_criacao || null,
       permissoes, // Adiciona a lista de permissões
     };
-  }  
+  }
 
   async validateUser(token: string): Promise<any> {
     const decoded = this.jwtService.verify(token);
@@ -157,14 +159,13 @@ export class AuthService {
   async validateGoogleToken(token: string): Promise<any> {
     const ticket = await this.client.verifyIdToken({
       idToken: token,
-      audience: process.env.GOOGLE_CLIENT_ID,
+      audience: process.env.ANDROID_CLIENT_ID,
     });
     const payload = ticket.getPayload();
     return payload;
   }
 
   async gerarTokenPeloTokenGoogle(accessToken: string) {
-
     // const { email } = await this.validateGoogleToken(accessToken);
     // const usuario = await this.prisma.usuario.findUnique({
     //   where: { email },
@@ -177,5 +178,23 @@ export class AuthService {
     const jwtToken = this.jwtService.sign({ id_usuario: 3 });
 
     return { access_token: jwtToken };
+  }
+
+  async getUserInfoFromGoogle(token: string) {
+    const res = await fetch('https://www.googleapis.com/userinfo/v2/me', {
+      headers: {
+        Authorization: `Bearer ${token}`,
+      },
+    });
+
+    if (!res.ok) {
+      const errorDetails = await res.json(); // Pega o conteúdo do erro, se houver
+      throw new UnauthorizedException(
+        `Token de acesso inválido ou expirado: ${res.status} - ${res.statusText}. Detalhes: ${JSON.stringify(errorDetails)}`,
+      );
+    }
+
+    const user = await res.json();
+    return user; // Aqui você pode retornar os dados do usuário ou manipulá-los conforme necessário
   }
 }

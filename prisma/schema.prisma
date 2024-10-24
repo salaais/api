@@ -21,6 +21,8 @@ model Usuario {
   bio                   String?
   deletado              Boolean                 @default(false)
   desativado            Boolean                 @default(false)
+  id_google             String?
+  url_imagem_perfil     String?
   comentarioProva       ComentarioProva[]
   historicoPagamento    HistoricoPagamento[]
   historico_prova       HistoricoProva[]

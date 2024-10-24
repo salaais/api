@@ -12,7 +12,7 @@ import { UpdateUserDto } from './dto/update-user.dto';
 import { Usuario } from '@prisma/client';
 import { JwtService } from '@nestjs/jwt';
 import { PermissionService } from 'src/permission/permission.service';
-import { Permissions } from 'src/permission/enum/permission.enum';
+import { Permissions } from 'src/utils/permission.enum';
 
 export const roundsOfHashing = 10;
 
@@ -121,18 +121,19 @@ export class UsersService {
         },
       },
     });
-  
+
     if (!user) {
       throw new Error('Usuário não encontrado.');
     }
-  
+
     const currentDate = new Date();
-  
+
     // Filtra permissões válidas (não expiradas)
     const validPermissions = user.permissaoUsuario.filter(
-      (perm) => !perm.data_expiracao || new Date(perm.data_expiracao) > currentDate
+      (perm) =>
+        !perm.data_expiracao || new Date(perm.data_expiracao) > currentDate,
     );
-  
+
     // Remove permissões expiradas diretamente no banco de dados
     await this.prisma.permissaoUsuario.deleteMany({
       where: {
@@ -140,7 +141,7 @@ export class UsersService {
         data_expiracao: { lt: currentDate },
       },
     });
-  
+
     return validPermissions.map((perm) => perm.permissao);
   }
 
@@ -164,18 +165,19 @@ export class UsersService {
         },
       },
     });
-  
+
     if (!user) {
       throw new Error('Usuário não encontrado.');
     }
-  
+
     const currentDate = new Date();
-  
+
     // Filtra permissões válidas (não expiradas)
     const validPermissions = user.permissaoUsuario.filter(
-      (perm) => !perm.data_expiracao || new Date(perm.data_expiracao) > currentDate
+      (perm) =>
+        !perm.data_expiracao || new Date(perm.data_expiracao) > currentDate,
     );
-  
+
     // Remove permissões expiradas
     await this.prisma.permissaoUsuario.deleteMany({
       where: {
@@ -183,12 +185,12 @@ export class UsersService {
         data_expiracao: { lt: currentDate },
       },
     });
-  
+
     // Retorna as regras associadas às permissões válidas
     return validPermissions.flatMap((perm) =>
-      perm.permissao.RegraPermissao.map((rp) => rp.regra)
+      perm.permissao.RegraPermissao.map((rp) => rp.regra),
     );
-  }  
+  }
 
   async getPermissoesByRegraId(regraId: number) {
     return this.prisma.regra.findUnique({
