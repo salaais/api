@@ -1,9 +1,5 @@
 import { Body, Controller, Post, UseGuards } from '@nestjs/common';
-import {
-  ApiOperation,
-  ApiResponse,
-  ApiTags,
-} from '@nestjs/swagger';
+import { ApiOperation, ApiResponse, ApiTags } from '@nestjs/swagger';
 import { QuestionService } from './question.service';
 import { CreateQuestionsTsvDto } from './dto/create-questions-tsv';
 import { AllQuestionsDto } from './dto/all-questions';
@@ -11,8 +7,8 @@ import { GenerateTestDto } from './dto/generate-test';
 import { TestGradeDto } from './dto/test-grade';
 import { GenerateTestRandomDto } from './dto/generate-test-random';
 import { QuestionBySubject } from './dto/questao-por-materia';
-import { AuthPermissionsGuard } from 'src/auth/auth.decorator';
-import { UserPermissions } from 'src/utils/permission.enum';
+import { AuthPermissionsGuard } from '../auth/auth.decorator';
+import { UserPermissions } from '../utils/permission.enum';
 
 //test
 @ApiTags('Questão')

@@ -31,8 +31,8 @@ import { UserPermissions } from '../utils/permission.enum';
 import { PermissionsGuard } from '../permission/permissions.guard';
 import { JwtService } from '@nestjs/jwt';
 import { StatusDeletadoDto, StatusDesativadoDto } from './dto/status-user.dto';
-import { AuthService } from 'src/auth/auth.service';
-import { AuthPermissionsGuard } from 'src/auth/auth.decorator';
+import { AuthService } from '../auth/auth.service';
+import { AuthPermissionsGuard } from '../auth/auth.decorator';
 
 @ApiTags('Usuario')
 @Controller('usuario')

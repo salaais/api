@@ -5,7 +5,7 @@ import {
   NotFoundException,
   BadRequestException,
 } from '@nestjs/common';
-import { PrismaService } from 'src/prisma/prisma.service';
+import { PrismaService } from '../prisma/prisma.service';
 import { CreateQuestionsTsvDto } from './dto/create-questions-tsv';
 import * as fastcsv from 'fast-csv';
 import { Readable } from 'stream';

@@ -7,7 +7,7 @@ import {
   ApiForbiddenResponse,
 } from '@nestjs/swagger';
 import { JwtAuthGuard } from './jwt-auth.guard';
-import { PermissionsGuard } from 'src/permission/permissions.guard';
+import { PermissionsGuard } from '../permission/permissions.guard';
 import { Permissions } from '../permission/permissions.decorator';
 
 export function AuthPermissionsGuard(permission?: string[] | string) {

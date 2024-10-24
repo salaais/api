@@ -7,7 +7,7 @@ import { PrismaModule } from '../prisma/prisma.module';
 import { JwtModule } from '@nestjs/jwt';
 import { PrismaClientExceptionFilter } from '../common/filters/prisma-exception.filter';
 import { AuthModule } from '../auth/auth.module'; // Importa o AuthModule
-import { PermissionModule } from 'src/permission/permission.module';
+import { PermissionModule } from '../permission/permission.module';
 
 @Module({
   imports: [
@@ -17,7 +17,7 @@ import { PermissionModule } from 'src/permission/permission.module';
       signOptions: { expiresIn: '60s' },
     }),
     forwardRef(() => AuthModule),
-    PermissionModule
+    PermissionModule,
   ],
   controllers: [UsersController],
   providers: [
@@ -31,8 +31,6 @@ import { PermissionModule } from 'src/permission/permission.module';
   exports: [UsersService],
 })
 export class UsersModule {}
-
-
 
 // @Module({
 //   imports: [PrismaModule],

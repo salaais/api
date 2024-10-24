@@ -11,8 +11,8 @@ import { User } from './interfaces/user.interface';
 import { UpdateUserDto } from './dto/update-user.dto';
 import { Usuario } from '@prisma/client';
 import { JwtService } from '@nestjs/jwt';
-import { PermissionService } from 'src/permission/permission.service';
-import { Permissions } from 'src/utils/permission.enum';
+import { PermissionService } from '../permission/permission.service';
+import { Permissions } from '../utils/permission.enum';
 
 export const roundsOfHashing = 10;
 
