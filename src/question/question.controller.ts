@@ -8,7 +8,7 @@ import { TestGradeDto } from './dto/test-grade';
 import { GenerateTestRandomDto } from './dto/generate-test-random';
 import { QuestionBySubject } from './dto/questao-por-materia';
 import { AuthPermissionsGuard } from '../auth/auth.decorator';
-import { UserPermissions } from '../utils/permission.enum';
+import { UserPermissions } from '../permission/enum/permission.enum';
 
 //test
 @ApiTags('Questão')

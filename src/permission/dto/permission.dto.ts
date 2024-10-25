@@ -1,5 +1,5 @@
 import { ApiProperty, ApiExtraModels } from '@nestjs/swagger';
-import { Permissions } from '../../utils/permission.enum';
+import { Permissions } from '../enum/permission.enum';
 
 export class PermissaoDto {
   @ApiProperty({

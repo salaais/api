@@ -27,7 +27,7 @@ import { Permissions as PermissionsDecorator } from '../permission/permissions.d
 import { UserEntity } from './entities/user.entity';
 import { JwtAuthGuard } from '../auth/jwt-auth.guard';
 import { RemoveUserDto } from './dto/remove-user.dto';
-import { UserPermissions } from '../utils/permission.enum';
+import { UserPermissions } from '../permission/enum/permission.enum';
 import { PermissionsGuard } from '../permission/permissions.guard';
 import { JwtService } from '@nestjs/jwt';
 import { StatusDeletadoDto, StatusDesativadoDto } from './dto/status-user.dto';

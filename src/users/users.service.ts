@@ -12,7 +12,7 @@ import { UpdateUserDto } from './dto/update-user.dto';
 import { Usuario } from '@prisma/client';
 import { JwtService } from '@nestjs/jwt';
 import { PermissionService } from '../permission/permission.service';
-import { Permissions } from '../utils/permission.enum';
+import { Permissions } from '../permission/enum/permission.enum';
 
 export const roundsOfHashing = 10;
 
